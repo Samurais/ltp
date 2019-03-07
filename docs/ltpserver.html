@@ -1,0 +1,352 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>使用ltp_server &#8212; LTP 3.3 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="使用其他语言调用ltp" href="otherlanguage.html" />
+    <link rel="prev" title="使用编程接口" href="api.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="otherlanguage.html" title="使用其他语言调用ltp"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="使用编程接口"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LTP 3.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ltp-server">
+<h1>使用ltp_server<a class="headerlink" href="#ltp-server" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>注意<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>ltp_server只提供Linux版本</p>
+<p>本文档中提到的LTP Server与语言云服务不同。语言云建立在LTP Server之上，并封装了一层REST API接口。语言云API(ltp-cloud-api)的请求方式与LTP Server不同。</p>
+</div>
+<div class="section" id="id2">
+<h2>搭建LTP Server<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>LTP Server在轻量级服务器程序mongoose基础上开发。在编译LTP源码之后，运行`./bin/ltp_server`就可以启动LTP Server。:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ltp_server</span> <span class="ow">in</span> <span class="n">LTP</span> <span class="mf">3.3</span><span class="o">.</span><span class="mi">2</span> <span class="o">-</span> <span class="p">(</span><span class="n">C</span><span class="p">)</span> <span class="mi">2012</span><span class="o">-</span><span class="mi">2016</span> <span class="n">HIT</span><span class="o">-</span><span class="n">SCIR</span>
+<span class="n">The</span> <span class="n">HTTP</span> <span class="n">server</span> <span class="n">frontend</span> <span class="k">for</span> <span class="n">Language</span> <span class="n">Technology</span> <span class="n">Platform</span><span class="o">.</span>
+
+<span class="n">usage</span><span class="p">:</span> <span class="o">./</span><span class="n">ltp_server</span> <span class="o">&lt;</span><span class="n">options</span><span class="o">&gt;</span>
+
+<span class="n">options</span><span class="p">:</span>
+  <span class="o">--</span><span class="n">port</span> <span class="n">arg</span>              <span class="n">The</span> <span class="n">port</span> <span class="n">number</span> <span class="p">[</span><span class="n">default</span><span class="o">=</span><span class="mi">12345</span><span class="p">]</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">threads</span> <span class="n">arg</span>           <span class="n">The</span> <span class="n">number</span> <span class="n">of</span> <span class="n">threads</span> <span class="p">[</span><span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">last</span><span class="o">-</span><span class="n">stage</span> <span class="n">arg</span>        <span class="n">The</span> <span class="n">last</span> <span class="n">stage</span> <span class="n">of</span> <span class="n">analysis</span><span class="o">.</span> <span class="n">This</span> <span class="n">option</span> <span class="n">can</span> <span class="n">be</span> <span class="n">used</span>
+                          <span class="n">when</span> <span class="n">the</span> <span class="n">user</span> <span class="n">onlywants</span> <span class="n">to</span> <span class="n">perform</span> <span class="n">early</span> <span class="n">stage</span>
+                          <span class="n">analysis</span><span class="p">,</span> <span class="n">like</span> <span class="n">only</span> <span class="n">segment</span> <span class="n">without</span> <span class="n">postagging</span><span class="o">.</span><span class="n">value</span>
+                          <span class="n">includes</span><span class="p">:</span>
+                          <span class="o">-</span> <span class="n">ws</span><span class="p">:</span> <span class="n">Chinese</span> <span class="n">word</span> <span class="n">segmentation</span>
+                          <span class="o">-</span> <span class="n">pos</span><span class="p">:</span> <span class="n">Part</span> <span class="n">of</span> <span class="n">speech</span> <span class="n">tagging</span>
+                          <span class="o">-</span> <span class="n">ner</span><span class="p">:</span> <span class="n">Named</span> <span class="n">entity</span> <span class="n">recognization</span>
+                          <span class="o">-</span> <span class="n">dp</span><span class="p">:</span> <span class="n">Dependency</span> <span class="n">parsing</span>
+                          <span class="o">-</span> <span class="n">srl</span><span class="p">:</span> <span class="n">Semantic</span> <span class="n">role</span> <span class="n">labeling</span> <span class="p">(</span><span class="n">equals</span> <span class="n">to</span> <span class="nb">all</span><span class="p">)</span>
+                          <span class="o">-</span> <span class="nb">all</span><span class="p">:</span> <span class="n">The</span> <span class="n">whole</span> <span class="n">pipeline</span> <span class="p">[</span><span class="n">default</span><span class="p">]</span>
+  <span class="o">--</span><span class="n">segmentor</span><span class="o">-</span><span class="n">model</span> <span class="n">arg</span>   <span class="n">The</span> <span class="n">path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">segment</span> <span class="n">model</span>
+                          <span class="p">[</span><span class="n">default</span><span class="o">=</span><span class="n">ltp_data</span><span class="o">/</span><span class="n">cws</span><span class="o">.</span><span class="n">model</span><span class="p">]</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">segmentor</span><span class="o">-</span><span class="n">lexicon</span> <span class="n">arg</span> <span class="n">The</span> <span class="n">path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">external</span> <span class="n">lexicon</span> <span class="ow">in</span> <span class="n">segmentor</span>
+                          <span class="p">[</span><span class="n">optional</span><span class="p">]</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">postagger</span><span class="o">-</span><span class="n">model</span> <span class="n">arg</span>   <span class="n">The</span> <span class="n">path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">postag</span> <span class="n">model</span>
+                          <span class="p">[</span><span class="n">default</span><span class="o">=</span><span class="n">ltp_data</span><span class="o">/</span><span class="n">pos</span><span class="o">.</span><span class="n">model</span><span class="p">]</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">postagger</span><span class="o">-</span><span class="n">lexicon</span> <span class="n">arg</span> <span class="n">The</span> <span class="n">path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">external</span> <span class="n">lexicon</span> <span class="ow">in</span> <span class="n">postagger</span>
+                          <span class="p">[</span><span class="n">optional</span><span class="p">]</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">ner</span><span class="o">-</span><span class="n">model</span> <span class="n">arg</span>         <span class="n">The</span> <span class="n">path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">NER</span> <span class="n">model</span> <span class="p">[</span><span class="n">default</span><span class="o">=</span><span class="n">ltp_data</span><span class="o">/</span><span class="n">ner</span><span class="o">.</span><span class="n">model</span>
+                          <span class="p">]</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">parser</span><span class="o">-</span><span class="n">model</span> <span class="n">arg</span>      <span class="n">The</span> <span class="n">path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">parser</span> <span class="n">model</span>
+                          <span class="p">[</span><span class="n">default</span><span class="o">=</span><span class="n">ltp_data</span><span class="o">/</span><span class="n">parser</span><span class="o">.</span><span class="n">model</span><span class="p">]</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">srl</span><span class="o">-</span><span class="n">data</span> <span class="n">arg</span>          <span class="n">The</span> <span class="n">path</span> <span class="n">to</span> <span class="n">the</span> <span class="n">SRL</span> <span class="n">model</span> <span class="n">directory</span>
+                          <span class="p">[</span><span class="n">default</span><span class="o">=</span><span class="n">ltp_data</span><span class="o">/</span><span class="n">srl_data</span><span class="o">/</span><span class="p">]</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">log</span><span class="o">-</span><span class="n">level</span> <span class="n">arg</span>         <span class="n">The</span> <span class="n">log</span> <span class="n">level</span><span class="p">:</span>
+                          <span class="o">-</span> <span class="mi">0</span><span class="p">:</span> <span class="n">TRACE</span> <span class="n">level</span>
+                          <span class="o">-</span> <span class="mi">1</span><span class="p">:</span> <span class="n">DEBUG</span> <span class="n">level</span>
+                          <span class="o">-</span> <span class="mi">2</span><span class="p">:</span> <span class="n">INFO</span> <span class="n">level</span> <span class="p">[</span><span class="n">default</span><span class="p">]</span>
+
+  <span class="o">-</span><span class="n">h</span> <span class="p">[</span> <span class="o">--</span><span class="n">help</span> <span class="p">]</span>           <span class="n">Show</span> <span class="n">help</span> <span class="n">information</span>
+</pre></div>
+</div>
+<p>其中较为重要的参数包括：</p>
+<ul class="simple">
+<li>last-stage: 特别的，可以使用 “|” 来分割多个最终目标。例如需要ner和parser就设置为 “ner|dp”。</li>
+<li>port：指定LTP server监听的端口</li>
+<li>threads：指定LTP server运行的线程数，线程数影响并发的处理能力</li>
+<li>log-level：指定日志级别，TRACE级别最低，显示日志信息最详细。INFO级别最高，显示日志最粗略。WARN与ERROR级日志默认显示。</li>
+</ul>
+<p>其余参数用以指定模型路径，具体含义与`ltp_test`相同。</p>
+</div>
+<div class="section" id="id3">
+<h2>请求LTP Server<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id4">
+<h3>原理<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>在ltp web service中，client与server之间采用http协议通信。client以post方式提交的数据到server，server将数据以xml的方式返回给client。</p>
+<p>client提交的post请求主要有以下几个字段。</p>
+</div>
+<div class="section" id="ltml-reference-label">
+<span id="id5"></span><h3>数据表示<a class="headerlink" href="#ltml-reference-label" title="Permalink to this headline">¶</a></h3>
+<p>LTP 数据表示标准称为LTML。下面是LTML的一个简单例子:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+&lt;xml4nlp&gt;
+    &lt;note sent=&quot;y&quot; word=&quot;y&quot; pos=&quot;y&quot; ne=&quot;y&quot; parser=&quot;y&quot; wsd=&quot;y&quot; srl=&quot;y&quot; /&gt;
+    &lt;doc&gt;
+        &lt;para id=&quot;0&quot;&gt;
+            &lt;sent id=&quot;0&quot; cont=&quot;我们都是中国人&quot;&gt;
+                &lt;word id=&quot;0&quot; cont=&quot;我们&quot; pos=&quot;r&quot; ne=&quot;O&quot; parent=&quot;2&quot; relate=&quot;SBV&quot; /&gt;
+                &lt;word id=&quot;1&quot; cont=&quot;都&quot; pos=&quot;d&quot; ne=&quot;O&quot; parent=&quot;2&quot; relate=&quot;ADV&quot; /&gt;
+                &lt;word id=&quot;2&quot; cont=&quot;是&quot;  pos=&quot;v&quot; ne=&quot;O&quot; parent=&quot;-1&quot; relate=&quot;HED&quot;&gt;
+                    &lt;arg id=&quot;0&quot; type=&quot;A0&quot; beg=&quot;0&quot; end=&quot;0&quot; /&gt;
+                    &lt;arg id=&quot;1&quot; type=&quot;AM-ADV&quot; beg=&quot;1&quot; end=&quot;1&quot; /&gt;
+                &lt;/word&gt;
+                &lt;word id=&quot;3&quot; cont=&quot;中国&quot; pos=&quot;ns&quot; ne=&quot;S-Ns&quot; parent=&quot;4&quot; relate=&quot;ATT&quot; /&gt;
+                &lt;word id=&quot;4&quot; cont=&quot;人&quot; pos=&quot;n&quot; ne=&quot;O&quot; parent=&quot;2&quot; relate=&quot;VOB&quot; /&gt;
+            &lt;/sent&gt;
+        &lt;/para&gt;
+    &lt;/doc&gt;
+&lt;/xml4nlp&gt;
+</pre></div>
+</div>
+<p>LTML 标准要求如下：</p>
+<p>结点标签分别为 xml4nlp, note, doc, para, sent, word, arg 共七种结点标签：</p>
+<ol class="arabic simple">
+<li>xml4nlp 为根结点，无任何属性值；</li>
+<li>note 为标记结点，具有的属性分别为：sent, word, pos, ne, parser, srl；
+分别代表分句，分词，词性标注，命名实体识别，依存句法分析，词义消歧，语义角色标注；
+值为”n”，表明未做，值为”y”则表示完成，如pos=”y”，表示已经完成了词性标注；</li>
+<li>doc 为篇章结点，以段落为单位包含文本内容；无任何属性值；</li>
+<li>para 为段落结点，需含id 属性，其值从0 开始；</li>
+<li>sent 为句子结点，需含属性为id，cont；<ol class="loweralpha">
+<li>id 为段落中句子序号，其值从0 开始；</li>
+<li>cont 为句子内容；</li>
+</ol>
+</li>
+<li>word 为分词结点，需含属性为id, cont；<ol class="loweralpha">
+<li>id 为句子中的词的序号，其值从0 开始，</li>
+<li>cont为分词内容；可选属性为 pos, ne, parent, relate；<ol class="upperroman">
+<li>pos 的内容为词性标注内容；</li>
+<li>ne 为命名实体内容；</li>
+<li>parent 与relate 成对出现，parent 为依存句法分析的父亲结点id 号，relate 为相对应的关系；</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>arg 为语义角色信息结点，任何一个谓词都会带有若干个该结点；其属性为id, type, beg，end；<ol class="loweralpha">
+<li>id 为序号，从0 开始；</li>
+<li>type 代表角色名称；</li>
+<li>beg 为开始的词序号，end 为结束的序号；</li>
+</ol>
+</li>
+</ol>
+<p>各结点及属性的逻辑关系说明如下：</p>
+<ol class="arabic simple">
+<li>各结点层次关系可以从图中清楚获得，凡带有id 属性的结点是可以包含多个；</li>
+<li>如果sent=”n”即未完成分句，则不应包含sent 及其下结点；</li>
+<li>如果sent=”y” word=”n”即完成分句，未完成分词，则不应包含word 及其下结点；</li>
+<li>其它情况均是在sent=”y” word=”y”的情况下：<ol class="loweralpha">
+<li>如果 pos=”y”则分词结点中必须包含pos 属性；</li>
+<li>如果 ne=”y”则分词结点中必须包含ne 属性；</li>
+<li>如果 parser=”y”则分词结点中必须包含parent 及relate 属性；</li>
+<li>如果 srl=”y”则凡是谓词(predicate)的分词会包含若干个arg 结点；</li>
+</ol>
+</li>
+</ol>
+</div>
+<div class="section" id="id6">
+<h3>示例程序<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<p>下面这个python程序例子显示如何向LTP Server发起http请求，并获得返回结果:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1">#!/usr/bin/env python</span>
+<span class="kn">import</span> <span class="nn">urllib</span><span class="o">,</span> <span class="nn">urllib2</span>
+
+<span class="n">uri_base</span> <span class="o">=</span> <span class="s2">&quot;http://127.0.0.1:12345/ltp&quot;</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;s&#39;</span><span class="p">:</span> <span class="s1">&#39;我爱北京天安门&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="s1">&#39;n&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="s1">&#39;all&#39;</span><span class="p">}</span>
+
+<span class="n">request</span> <span class="o">=</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">uri_base</span><span class="p">)</span>
+<span class="n">params</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+<span class="n">content</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<span class="nb">print</span> <span class="n">content</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id7">
+<h3>错误返回<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>如果请求有不符合格式要求，LTP Server会返回400错误。下面的表格显示了LTP Server返回的错误类型以及原因。</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="9%" />
+<col width="28%" />
+<col width="64%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">code</th>
+<th class="head">reason</th>
+<th class="head">解释</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>400</td>
+<td>EMPTY SENTENCE</td>
+<td>输入句子为空</td>
+</tr>
+<tr class="row-odd"><td>400</td>
+<td>ENCODING NOT IN UTF8</td>
+<td>输入句子非UTF8编码</td>
+</tr>
+<tr class="row-even"><td>400</td>
+<td>SENTENCE TOO LONG</td>
+<td>输入句子不符合 <a class="reference internal" href="ltptest.html#ltprestrict-reference-label"><span class="std std-ref">长度限制</span></a></td>
+</tr>
+<tr class="row-odd"><td>400</td>
+<td>BAD XML FORMAT</td>
+<td>输入句子不符合LTML格式</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="id8">
+<h2>当前版本服务性能<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<p>版本：3.3.0</p>
+<p>测试使用Xeon(R) CPU E5-2620 0 &#64; 2.00GHz，4线程，请求时间：3分钟，测试脚本使用pylot 1.26。</p>
+<p>Number of agents = 10</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="39%" />
+<col width="39%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Last Stage</th>
+<th class="head">Response Time (secs)</th>
+<th class="head">Throughput (req/sec)</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>ws</td>
+<td>0.010</td>
+<td>643.308</td>
+</tr>
+<tr class="row-odd"><td>pos</td>
+<td>0.012</td>
+<td>743.809</td>
+</tr>
+<tr class="row-even"><td>dp</td>
+<td>0.016</td>
+<td>574.785</td>
+</tr>
+<tr class="row-odd"><td>ne</td>
+<td>0.014</td>
+<td>673.661</td>
+</tr>
+<tr class="row-even"><td>srl/all</td>
+<td>0.036</td>
+<td>266.094</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">使用ltp_server</a><ul>
+<li><a class="reference internal" href="#id1">注意</a></li>
+<li><a class="reference internal" href="#id2">搭建LTP Server</a></li>
+<li><a class="reference internal" href="#id3">请求LTP Server</a><ul>
+<li><a class="reference internal" href="#id4">原理</a></li>
+<li><a class="reference internal" href="#ltml-reference-label">数据表示</a></li>
+<li><a class="reference internal" href="#id6">示例程序</a></li>
+<li><a class="reference internal" href="#id7">错误返回</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id8">当前版本服务性能</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="api.html"
+                        title="previous chapter">使用编程接口</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="otherlanguage.html"
+                        title="next chapter">使用其他语言调用ltp</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/ltpserver.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="otherlanguage.html" title="使用其他语言调用ltp"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="使用编程接口"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LTP 3.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015, HIT-SCIR.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

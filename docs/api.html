@@ -1,0 +1,870 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>使用编程接口 &#8212; LTP 3.3 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="使用ltp_server" href="ltpserver.html" />
+    <link rel="prev" title="使用ltp_test和xxx_cmdline" href="ltptest.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="ltpserver.html" title="使用ltp_server"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ltptest.html" title="使用ltp_test和xxx_cmdline"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LTP 3.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>使用编程接口<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>如果要使用编程接口，您需要自己在开发环境中从源代码编译出相关的链接库，编译方法可以参考 <a class="reference internal" href="install.html#install-label"><span class="std std-ref">使用 Docker 中的LTP</span></a> 一节</p>
+<p>下面的文档将介绍使用LTP编译产生的静态链接库编写程序的方法。</p>
+<div class="section" id="id2">
+<h2>使用动态库<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>如果您之前对C++使用动态库并不熟悉，可以 <a class="reference external" href="http://msdn.microsoft.com/zh-cn/library/ms235636.aspx">参考这里</a> 。</p>
+<p>下面以一个分词程序 <code class="file docutils literal notranslate"><span class="pre">cws.cpp</span></code> 来说明调用动态库的具体过程。</p>
+<p>首先，编写调用动态库的程序，注意需要包含相应的头文件，代码如下:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &quot;segment_dll.h&quot;
+
+int main(int argc, char * argv[]) {
+    if (argc &lt; 2) {
+        std::cerr &lt;&lt; &quot;cws [model path]&quot; &lt;&lt; std::endl;
+        return 1;
+    }
+
+    void * engine = segmentor_create_segmentor(argv[1]);//分词接口，初始化分词器
+    if (!engine) {
+        return -1;
+    }
+    std::vector&lt;std::string&gt; words;
+    int len = segmentor_segment(engine,
+            &quot;爱上一匹野马，可我的家里没有草原。&quot;, words);//分词接口，对句子分词。
+    for (int i = 0; i &lt; len; ++ i) {
+        std::cout &lt;&lt; words[i] &lt;&lt; &quot;|&quot;;
+    }
+    std::cout &lt;&lt; std::endl;
+    segmentor_release_segmentor(engine);//分词接口，释放分词器
+    return 0;
+}
+</pre></div>
+</div>
+<p>接下来，编译程序，需要加入头文件和动态库的路径。</p>
+<p>下面给出Linux、Windows两个平台下的编译示例。</p>
+<div class="section" id="windows-msvc">
+<h3>在 Windows (MSVC) 下使用动态库<a class="headerlink" href="#windows-msvc" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic">
+<li><p class="first">添加头文件路径</p>
+<blockquote>
+<div><p>右键工程-&gt;Configuration properties-&gt;c/c++-&gt;general-&gt;additional include directories</p>
+<img alt="http://p5xnn6ehz.bkt.clouddn.com/ltp-doc-img-3.6.1-1.png" src="http://p5xnn6ehz.bkt.clouddn.com/ltp-doc-img-3.6.1-1.png" />
+</div></blockquote>
+</li>
+<li><p class="first">添加动态库路径</p>
+<blockquote>
+<div><p>右键工程-&gt;Configuration properties-&gt;linker-&gt;general-&gt;additional library directories</p>
+<img alt="http://p5xnn6ehz.bkt.clouddn.com/ltp-doc-img-3.6.1-2.png" src="http://p5xnn6ehz.bkt.clouddn.com/ltp-doc-img-3.6.1-2.png" />
+</div></blockquote>
+</li>
+<li><p class="first">导入所需的动态库</p>
+<blockquote>
+<div><p>右键工程-&gt;properties-&gt;linker-&gt;input-&gt;additional additional dependencies</p>
+<img alt="http://p5xnn6ehz.bkt.clouddn.com/ltp-doc-img-3.6.1-3.png" src="http://p5xnn6ehz.bkt.clouddn.com/ltp-doc-img-3.6.1-3.png" />
+</div></blockquote>
+</li>
+<li><p class="first">最后，Build工程即可。</p>
+</li>
+</ol>
+</div>
+<div class="section" id="linux">
+<h3>在 Linux 下使用动态库<a class="headerlink" href="#linux" title="Permalink to this headline">¶</a></h3>
+<p>假定您下载并将LTP放置于 <code class="file docutils literal notranslate"><span class="pre">/path/to/your/ltp-project</span></code> 目录下,那么编译命令例如下:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">g</span><span class="o">++</span> <span class="o">-</span><span class="n">o</span> <span class="n">cws</span> <span class="n">cws</span><span class="o">.</span><span class="n">cpp</span> <span class="o">-</span><span class="n">I</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">your</span><span class="o">/</span><span class="n">ltp</span><span class="o">-</span><span class="n">project</span><span class="o">/</span><span class="n">include</span><span class="o">/</span> <span class="o">-</span><span class="n">I</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">your</span><span class="o">/</span><span class="n">ltp</span><span class="o">-</span><span class="n">project</span><span class="o">/</span><span class="n">thirdparty</span><span class="o">/</span><span class="n">boost</span><span class="o">/</span><span class="n">include</span> <span class="o">-</span><span class="n">Wl</span><span class="p">,</span><span class="o">-</span><span class="n">dn</span> <span class="o">-</span><span class="n">L</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">your</span><span class="o">/</span><span class="n">ltp</span><span class="o">-</span><span class="n">project</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span> <span class="o">-</span><span class="n">lsegmentor</span> <span class="o">-</span><span class="n">lboost_regex</span> <span class="o">-</span><span class="n">Wl</span><span class="p">,</span><span class="o">-</span><span class="n">dy</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>分词接口<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>分词主要提供三个接口：</p>
+<dl class="function">
+<dt id="_CPPv426segmentor_create_segmentorPKcPKc">
+<span id="_CPPv326segmentor_create_segmentorPKcPKc"></span><span id="_CPPv226segmentor_create_segmentorPKcPKc"></span><span id="segmentor_create_segmentor__cCP.cCP"></span>void *<code class="descname">segmentor_create_segmentor</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>path</em>, <em class="property">const</em> char *<em>lexicon_path</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv426segmentor_create_segmentorPKcPKc" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>功能：</p>
+<p>读取模型文件，初始化分词器。</p>
+<p>参数：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="31%" />
+<col width="69%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">参数名</th>
+<th class="head">参数描述</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>const char * path</td>
+<td>指定模型文件的路径</td>
+</tr>
+<tr class="row-odd"><td>const char * lexicon_path</td>
+<td>指定外部词典路径。如果lexicon_path为NULL，则不加载外部词典</td>
+</tr>
+</tbody>
+</table>
+<p>返回值：</p>
+<p>返回一个指向分词器的指针。</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv427segmentor_release_segmentorPv">
+<span id="_CPPv327segmentor_release_segmentorPv"></span><span id="_CPPv227segmentor_release_segmentorPv"></span><span id="segmentor_release_segmentor__voidP"></span>int <code class="descname">segmentor_release_segmentor</code><span class="sig-paren">(</span>void *<em>segmentor</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv427segmentor_release_segmentorPv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>功能：</p>
+<p>释放模型文件，销毁分词器。</p>
+<p>参数：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="31%" />
+<col width="69%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">参数名</th>
+<th class="head">参数描述</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>void * segmentor</td>
+<td>待销毁分词器的指针</td>
+</tr>
+</tbody>
+</table>
+<p>返回值：</p>
+<p>销毁成功时返回0，否则返回-1</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv417segmentor_segmentPvRKNSt6stringERNSt6vectorINSt6stringEEE">
+<span id="_CPPv317segmentor_segmentPvRKNSt6stringERNSt6vectorINSt6stringEEE"></span><span id="_CPPv217segmentor_segmentPvRKNSt6stringERNSt6vectorINSt6stringEEE"></span><span id="segmentor_segment__voidP.ssCR.std::vector:ss:R"></span>int <code class="descname">segmentor_segment</code><span class="sig-paren">(</span>void *<em>segmentor</em>, <em class="property">const</em> std::string &amp;<em>line</em>, std::vector&lt;std::string&gt; &amp;<em>words</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv417segmentor_segmentPvRKNSt6stringERNSt6vectorINSt6stringEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>功能：</p>
+<p>调用分词接口。</p>
+<p>参数：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="36%" />
+<col width="64%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">参数名</th>
+<th class="head">参数描述</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>void * segmentor</td>
+<td>分词器的指针</td>
+</tr>
+<tr class="row-odd"><td>const std::string &amp; line</td>
+<td>待分词句子</td>
+</tr>
+<tr class="row-even"><td>std::vector&lt;std::string&gt; &amp; words</td>
+<td>结果分词序列</td>
+</tr>
+</tbody>
+</table>
+<p>返回值：</p>
+<p>返回结果中词的个数。</p>
+</dd></dl>
+
+<div class="section" id="id5">
+<h3>示例程序<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>一个简单的示例程序可以说明分词接口的用法:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &quot;segment_dll.h&quot;
+
+int main(int argc, char * argv[]) {
+    if (argc &lt; 2) {
+        std::cerr &lt;&lt; &quot;cws [model path]&quot; &lt;&lt; std::endl;
+        return 1;
+    }
+
+    void * engine = segmentor_create_segmentor(argv[1]);
+    if (!engine) {
+        return -1;
+    }
+    std::vector&lt;std::string&gt; words;
+    int len = segmentor_segment(engine,
+            &quot;爱上一匹野马，可我的家里没有草原。&quot;, words);
+    for (int i = 0; i &lt; len; ++ i) {
+        std::cout &lt;&lt; words[i] &lt;&lt; &quot;|&quot;;
+    }
+    std::cout &lt;&lt; std::endl;
+    segmentor_release_segmentor(engine);
+    return 0;
+}
+</pre></div>
+</div>
+<p>示例程序通过命令行参数指定模型文件路径。第11行加载模型文件，并将分词器指针存储在engine中。第16行运行分词逻辑，并将结果存储在名为words的std::vector&lt;std::string&gt;中。第22行释放分词模型。</p>
+<p>调用分词接口的程序在编译的时，需要链接segmentor.a(MSVC下需链接segmentor.lib)。</p>
+</div>
+</div>
+<div class="section" id="id6">
+<h2>词性标注接口<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<p>词性标注主要提供三个接口</p>
+<dl class="function">
+<dt id="_CPPv426postagger_create_postaggerPKcPKc">
+<span id="_CPPv326postagger_create_postaggerPKcPKc"></span><span id="_CPPv226postagger_create_postaggerPKcPKc"></span><span id="postagger_create_postagger__cCP.cCP"></span>void *<code class="descname">postagger_create_postagger</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>path</em>, <em class="property">const</em> char *<em>lexicon_file</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv426postagger_create_postaggerPKcPKc" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>功能：</p>
+<p>读取模型文件，初始化词性标注器</p>
+<p>参数：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="33%" />
+<col width="67%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">参数名</th>
+<th class="head">参数描述</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>const char * path</td>
+<td>词性标注模型路径</td>
+</tr>
+<tr class="row-odd"><td>const char * lexicon_file</td>
+<td>指定词性标注外部词典路径。如果lexicon_file为NULL，则不加载外部词典</td>
+</tr>
+</tbody>
+</table>
+<p>lexicon_file参数指定的外部词典文件样例如下所示。每行指定一个词，第一列指定单词，第二列之后指定该词的候选词性（可以有多项，每一项占一列），列与列之间用空格区分:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>雷人 v a
+】 wp
+</pre></div>
+</div>
+<p>返回值：</p>
+<p>返回一个指向词性标注器的指针。</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv427postagger_release_postaggerPv">
+<span id="_CPPv327postagger_release_postaggerPv"></span><span id="_CPPv227postagger_release_postaggerPv"></span><span id="postagger_release_postagger__voidP"></span>int <code class="descname">postagger_release_postagger</code><span class="sig-paren">(</span>void *<em>postagger</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv427postagger_release_postaggerPv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>功能：</p>
+<p>释放模型文件，销毁分词器。</p>
+<p>参数：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="33%" />
+<col width="67%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">参数名</th>
+<th class="head">参数描述</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>void * postagger</td>
+<td>待销毁的词性标注器的指针</td>
+</tr>
+</tbody>
+</table>
+<p>返回值：</p>
+<p>销毁成功时返回0，否则返回-1</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv416postagger_postagPvRKNSt6vectorINSt6stringEEERNSt6vectorINSt6stringEEE">
+<span id="_CPPv316postagger_postagPvRKNSt6vectorINSt6stringEEERNSt6vectorINSt6stringEEE"></span><span id="_CPPv216postagger_postagPvRKNSt6vectorINSt6stringEEERNSt6vectorINSt6stringEEE"></span><span id="postagger_postag__voidP.std::vector:ss:CR.std::vector:ss:R"></span>int <code class="descname">postagger_postag</code><span class="sig-paren">(</span>void *<em>postagger</em>, <em class="property">const</em> std::vector&lt;std::string&gt; &amp;<em>words</em>, std::vector&lt;std::string&gt; &amp;<em>tags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv416postagger_postagPvRKNSt6vectorINSt6stringEEERNSt6vectorINSt6stringEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>功能：</p>
+<p>调用词性标注接口</p>
+<p>参数：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="37%" />
+<col width="63%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">参数名</th>
+<th class="head">参数描述</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>void * postagger</td>
+<td>词性标注器的指针</td>
+</tr>
+<tr class="row-odd"><td>const std::vector&lt;std::string&gt; &amp; words</td>
+<td>待标注的词序列</td>
+</tr>
+<tr class="row-even"><td>std::vector&lt;std::string&gt; &amp; tags</td>
+<td>词性标注结果，序列中的第i个元素是第i个词的词性</td>
+</tr>
+</tbody>
+</table>
+<p>返回值：</p>
+<p>返回结果中词的个数</p>
+</dd></dl>
+
+<div class="section" id="id7">
+<h3>示例程序<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>一个简单的示例程序可以说明词性标注接口的用法:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &quot;postag_dll.h&quot;
+
+int main(int argc, char * argv[]) {
+    if (argc &lt; 1) {
+        return -1;
+    }
+
+    void * engine = postagger_create_postagger(argv[1]);
+    if (!engine) {
+        return -1;
+    }
+
+    std::vector&lt;std::string&gt; words;
+
+    words.push_back(&quot;我&quot;);
+    words.push_back(&quot;是&quot;);
+    words.push_back(&quot;中国人&quot;);
+
+    std::vector&lt;std::string&gt; tags;
+
+    postagger_postag(engine, words, tags);
+
+    for (int i = 0; i &lt; tags.size(); ++ i) {
+        std::cout &lt;&lt; words[i] &lt;&lt; &quot;/&quot; &lt;&lt; tags[i];
+        if (i == tags.size() - 1) std::cout &lt;&lt; std::endl;
+        else std::cout &lt;&lt; &quot; &quot;;
+
+    }
+
+    postagger_release_postagger(engine);
+    return 0;
+}
+</pre></div>
+</div>
+<p>示例程序通过命令行参数指定模型文件路径。第11行加载模型文件，并将词性标注器指针存储在engine中。第18至20行构造分词序列，第24行运行词性标注逻辑，并将结果存储在名为tags的std::vector&lt;std::string&gt;中。第33行释放分词模型。</p>
+<p>调用词性标注接口的程序在编译的时，需要链接postagger.a(MSVC下需链接postagger.lib)。</p>
+</div>
+</div>
+<div class="section" id="id8">
+<h2>命名实体识别接口<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<p>命名实体识别主要提供三个接口：</p>
+<dl class="function">
+<dt id="_CPPv421ner_create_recognizerPKc">
+<span id="_CPPv321ner_create_recognizerPKc"></span><span id="_CPPv221ner_create_recognizerPKc"></span><span id="ner_create_recognizer__cCP"></span>void *<code class="descname">ner_create_recognizer</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv421ner_create_recognizerPKc" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>功能：</p>
+<p>读取模型文件，初始化命名实体识别器</p>
+<p>参数：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="37%" />
+<col width="63%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">参数名</th>
+<th class="head">参数描述</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>const char * path</td>
+<td>命名实体识别模型路径</td>
+</tr>
+</tbody>
+</table>
+<p>返回值：</p>
+<p>返回一个指向词性标注器的指针。</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv422ner_release_recognizerPv">
+<span id="_CPPv322ner_release_recognizerPv"></span><span id="_CPPv222ner_release_recognizerPv"></span><span id="ner_release_recognizer__voidP"></span>int <code class="descname">ner_release_recognizer</code><span class="sig-paren">(</span>void *<em>recognizer</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv422ner_release_recognizerPv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>功能：</p>
+<p>释放模型文件，销毁命名实体识别器。</p>
+<p>参数：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="37%" />
+<col width="63%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">参数名</th>
+<th class="head">参数描述</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>void * recognizer</td>
+<td>待销毁的命名实体识别器的指针</td>
+</tr>
+</tbody>
+</table>
+<p>返回值：</p>
+<p>销毁成功时返回0，否则返回-1</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv413ner_recognizePvRKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEENSt6vectorINSt6stringEEE">
+<span id="_CPPv313ner_recognizePvRKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEENSt6vectorINSt6stringEEE"></span><span id="_CPPv213ner_recognizePvRKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEENSt6vectorINSt6stringEEE"></span><span id="ner_recognize__voidP.std::vector:ss:CR.std::vector:ss:CR.std::vector:ss:"></span>int <code class="descname">ner_recognize</code><span class="sig-paren">(</span>void *<em>recognizer</em>, <em class="property">const</em> std::vector&lt;std::string&gt; &amp;<em>words</em>, <em class="property">const</em> std::vector&lt;std::string&gt; &amp;<em>postags</em>, std::vector&lt;std::string&gt; <em>tags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv413ner_recognizePvRKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEENSt6vectorINSt6stringEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>功能：</p>
+<p>调用命名实体识别接口</p>
+<p>参数：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="32%" />
+<col width="68%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">参数名</th>
+<th class="head">参数描述</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>void * recognizer</td>
+<td>命名实体识别器的指针</td>
+</tr>
+<tr class="row-odd"><td>const std::vector&lt;std::string&gt; &amp; words</td>
+<td>待识别的词序列</td>
+</tr>
+<tr class="row-even"><td>const std::vector&lt;std::string&gt; &amp; postags</td>
+<td>待识别的词的词性序列</td>
+</tr>
+<tr class="row-odd"><td>std::vector&lt;std::string&gt; &amp; tags</td>
+<td><div class="first last line-block">
+<div class="line">命名实体识别结果，</div>
+<div class="line">命名实体识别的结果为O时表示这个词不是命名实体，</div>
+<div class="line">否则为{POS}-{TYPE}形式的标记，POS代表这个词在命名实体中的位置，TYPE表示命名实体类型</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<p>返回值：</p>
+<p>返回结果中词的个数</p>
+</dd></dl>
+
+<div class="section" id="id9">
+<h3>示例程序<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<p>一个简单的示例程序可以说明命名实体识别接口的用法:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &quot;ner_dll.h&quot;
+
+int main(int argc, char * argv[]) {
+    if (argc &lt; 2) {
+        std::cerr &lt;&lt; &quot;usage: ./ner [model_path]&quot; &lt;&lt; std::endl;
+        return -1;
+    }
+
+    void * engine = ner_create_recognizer(argv[1]);
+    if (!engine) {
+        std::cerr &lt;&lt; &quot;failed to load model&quot; &lt;&lt; std::endl;
+        return -1;
+    }
+
+    std::vector&lt;std::string&gt; words;
+    std::vector&lt;std::string&gt; postags;
+
+    words.push_back(&quot;中国&quot;);    postags.push_back(&quot;ns&quot;);
+    words.push_back(&quot;国际&quot;);    postags.push_back(&quot;n&quot;);
+    words.push_back(&quot;广播&quot;);    postags.push_back(&quot;n&quot;);
+    words.push_back(&quot;电台&quot;);    postags.push_back(&quot;n&quot;);
+    words.push_back(&quot;创办&quot;);    postags.push_back(&quot;v&quot;);
+    words.push_back(&quot;于&quot;);      postags.push_back(&quot;p&quot;);
+    words.push_back(&quot;1941年&quot;);  postags.push_back(&quot;m&quot;);
+    words.push_back(&quot;12月&quot;);    postags.push_back(&quot;m&quot;);
+    words.push_back(&quot;3日&quot;);     postags.push_back(&quot;m&quot;);
+    words.push_back(&quot;。&quot;);      postags.push_back(&quot;wp&quot;);
+
+    std::vector&lt;std::string&gt;    tags;
+
+    ner_recognize(engine, words, postags, tags);
+
+    for (int i = 0; i &lt; tags.size(); ++ i) {
+        std::cout &lt;&lt; words[i] &lt;&lt; &quot;\t&quot; &lt;&lt; postags[i] &lt;&lt; &quot;\t&quot; &lt;&lt; tags[i] &lt;&lt; std::endl;
+    }
+
+    ner_release_recognizer(engine);
+    return 0;
+}
+</pre></div>
+</div>
+<p>示例程序通过命令行参数指定模型文件路径。第11行加载模型文件，并将命名实体识别器指针存储在engine中。第21至30行构造分词序列words和词性标注序列postags，第34行运行词性标注逻辑，并将结果存储在名为tags的std::vector&lt;std::string&gt;中。第40行释放分词模型。</p>
+<p>调用命名实体识别接口的程序在编译的时，需要链接ner.a（MSVC下需链接ner.lib）。</p>
+</div>
+</div>
+<div class="section" id="id10">
+<h2>依存句法分析接口<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<p>依存句法分析主要提供三个接口：</p>
+<dl class="function">
+<dt id="_CPPv420parser_create_parserPKc">
+<span id="_CPPv320parser_create_parserPKc"></span><span id="_CPPv220parser_create_parserPKc"></span><span id="parser_create_parser__cCP"></span>void *<code class="descname">parser_create_parser</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv420parser_create_parserPKc" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>功能：</p>
+<p>读取模型文件，初始化依存句法分析器</p>
+<p>参数：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="37%" />
+<col width="63%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">参数名</th>
+<th class="head">参数描述</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>const char * path</td>
+<td>依存句法分析模型路径</td>
+</tr>
+</tbody>
+</table>
+<p>返回值：</p>
+<p>返回一个指向依存句法分析器的指针。</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv421parser_release_parserPv">
+<span id="_CPPv321parser_release_parserPv"></span><span id="_CPPv221parser_release_parserPv"></span><span id="parser_release_parser__voidP"></span>int <code class="descname">parser_release_parser</code><span class="sig-paren">(</span>void *<em>parser</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv421parser_release_parserPv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>功能：</p>
+<p>释放模型文件，销毁依存句法分析器。</p>
+<p>参数：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="37%" />
+<col width="63%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">参数名</th>
+<th class="head">参数描述</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>void * parser</td>
+<td>待销毁的依存句法分析器的指针</td>
+</tr>
+</tbody>
+</table>
+<p>返回值：</p>
+<p>销毁成功时返回0，否则返回-1</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv412parser_parsePvRKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEERNSt6vectorIiEERNSt6vectorINSt6stringEEE">
+<span id="_CPPv312parser_parsePvRKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEERNSt6vectorIiEERNSt6vectorINSt6stringEEE"></span><span id="_CPPv212parser_parsePvRKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEERNSt6vectorIiEERNSt6vectorINSt6stringEEE"></span><span id="parser_parse__voidP.std::vector:ss:CR.std::vector:ss:CR.std::vector:i:R.std::vector:ss:R"></span>int <code class="descname">parser_parse</code><span class="sig-paren">(</span>void *<em>parser</em>, <em class="property">const</em> std::vector&lt;std::string&gt; &amp;<em>words</em>, <em class="property">const</em> std::vector&lt;std::string&gt; &amp;<em>postagger</em>, std::vector&lt;int&gt; &amp;<em>heads</em>, std::vector&lt;std::string&gt; &amp;<em>deprels</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv412parser_parsePvRKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEERNSt6vectorIiEERNSt6vectorINSt6stringEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>功能：</p>
+<p>调用依存句法分析接口</p>
+<p>参数：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="38%" />
+<col width="62%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">参数名</th>
+<th class="head">参数描述</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>void * parser</td>
+<td>依存句法分析器的指针</td>
+</tr>
+<tr class="row-odd"><td>const std::vector&lt;std::string&gt; &amp; words</td>
+<td>待分析的词序列</td>
+</tr>
+<tr class="row-even"><td>const std::vector&lt;std::string&gt; &amp; postags</td>
+<td>待分析的词的词性序列</td>
+</tr>
+<tr class="row-odd"><td>std::vector&lt;int&gt; &amp; heads</td>
+<td>结果依存弧，heads[i]代表第i个词的父亲节点的编号</td>
+</tr>
+<tr class="row-even"><td>std::vector&lt;std::string&gt; &amp; deprels</td>
+<td>结果依存弧关系类型</td>
+</tr>
+</tbody>
+</table>
+<p>返回值：</p>
+<p>返回结果中词的个数</p>
+</dd></dl>
+
+<div class="section" id="id11">
+<h3>示例程序<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<p>一个简单的示例程序可以说明依存句法分析接口的用法:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &quot;parser_dll.h&quot;
+
+int main(int argc, char * argv[]) {
+    if (argc &lt; 2) {
+        return -1;
+    }
+
+    void * engine = parser_create_parser(argv[1]);
+    if (!engine) {
+        return -1;
+    }
+
+    std::vector&lt;std::string&gt; words;
+    std::vector&lt;std::string&gt; postags;
+
+    words.push_back(&quot;一把手&quot;);      postags.push_back(&quot;n&quot;);
+    words.push_back(&quot;亲自&quot;);        postags.push_back(&quot;d&quot;);
+    words.push_back(&quot;过问&quot;);        postags.push_back(&quot;v&quot;);
+    words.push_back(&quot;。&quot;);          postags.push_back(&quot;wp&quot;);
+
+    std::vector&lt;int&gt;            heads;
+    std::vector&lt;std::string&gt;    deprels;
+
+    parser_parse(engine, words, postags, heads, deprels);
+
+    for (int i = 0; i &lt; heads.size(); ++ i) {
+        std::cout &lt;&lt; words[i] &lt;&lt; &quot;\t&quot; &lt;&lt; postags[i] &lt;&lt; &quot;\t&quot;
+            &lt;&lt; heads[i] &lt;&lt; &quot;\t&quot; &lt;&lt; deprels[i] &lt;&lt; std::endl;
+    }
+
+    parser_release_parser(engine);
+    return 0;
+}
+</pre></div>
+</div>
+<p>示例程序通过命令行参数指定模型文件路径。第11行加载模型文件，并将依存句法分析器指针存储在engine中。第19至22行构造分词序列words和词性标注序列postags，第27行运行词性标注逻辑，并将依存弧关系存储在heads中，将依存弧关系类型存储在deprels中。第34行释放依存句法分析模型。</p>
+<p>调用依存句法分析接口的程序在编译的时，需要链接parser.a(MSVC下需链接parser.lib)。</p>
+</div>
+</div>
+<div class="section" id="id12">
+<h2>语义角色标注接口<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h2>
+<p>语义角色标注主要提供三个接口：</p>
+<dl class="function">
+<dt id="_CPPv416SRL_loadResourceRKNSt6stringE">
+<span id="_CPPv316SRL_loadResourceRKNSt6stringE"></span><span id="_CPPv216SRL_loadResourceRKNSt6stringE"></span><span id="SRL_loadResource__ssCR"></span>int <code class="descname">SRL_loadResource</code><span class="sig-paren">(</span><em class="property">const</em> std::string &amp;<em>ConfigDir</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv416SRL_loadResourceRKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>功能：</p>
+<p>读取模型文件，初始化语义角色标注器</p>
+<p>参数：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="37%" />
+<col width="63%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">参数名</th>
+<th class="head">参数描述</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>const std::string&amp; ConfigDir</td>
+<td>语义角色标注模型文件夹所在路径</td>
+</tr>
+</tbody>
+</table>
+<p>返回值：</p>
+<p>返回一个指向词性标注器的指针。</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv419SRL_ReleaseResourcev">
+<span id="_CPPv319SRL_ReleaseResourcev"></span><span id="_CPPv219SRL_ReleaseResourcev"></span><span id="SRL_ReleaseResource"></span>int <code class="descname">SRL_ReleaseResource</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv419SRL_ReleaseResourcev" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>功能：</p>
+<p>释放模型文件，销毁命名实体识别器。</p>
+<p>返回值：</p>
+<p>销毁成功时返回0，否则返回-1</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv45DoSRLRKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEERKNSt6vectorINSt4pairIiNSt6stringEEEEERNSt6vectorINSt4pairIiNSt6vectorINSt4pairINSt6stringENSt4pairIiiEEEEEEEEEE">
+<span id="_CPPv35DoSRLRKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEERKNSt6vectorINSt4pairIiNSt6stringEEEEERNSt6vectorINSt4pairIiNSt6vectorINSt4pairINSt6stringENSt4pairIiiEEEEEEEEEE"></span><span id="_CPPv25DoSRLRKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEERKNSt6vectorINSt4pairIiNSt6stringEEEEERNSt6vectorINSt4pairIiNSt6vectorINSt4pairINSt6stringENSt4pairIiiEEEEEEEEEE"></span><span id="DoSRL__std::vector:ss:CR.std::vector:ss:CR.std::vector:ss:CR.std::vector:std::pair:i.ss::CR.std::vector:std::pair:i.std::vector:std::pair:ss.std::pair:i.i:::::R"></span>int <code class="descname">DoSRL</code><span class="sig-paren">(</span><em class="property">const</em> std::vector&lt;std::string&gt; &amp;<em>words</em>, <em class="property">const</em> std::vector&lt;std::string&gt; &amp;<em>POS</em>, <em class="property">const</em> std::vector&lt;std::string&gt; &amp;<em>NEs</em>, <em class="property">const</em> std::vector&lt;std::pair&lt;int, std::string&gt;&gt; &amp;<em>parse</em>, std::vector&lt;std::pair&lt;int, std::vector&lt;std::pair&lt;std::string, std::pair&lt;int, int&gt;&gt;&gt;&gt;&gt; &amp;<em>SRLResult</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv45DoSRLRKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEERKNSt6vectorINSt6stringEEERKNSt6vectorINSt4pairIiNSt6stringEEEEERNSt6vectorINSt4pairIiNSt6vectorINSt4pairINSt6stringENSt4pairIiiEEEEEEEEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>功能：</p>
+<p>调用命名实体识别接口</p>
+<p>参数：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="32%" />
+<col width="68%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">参数名</th>
+<th class="head">参数描述</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>const std::vector&lt;std::string&gt; &amp; words</td>
+<td>输入的词序列</td>
+</tr>
+<tr class="row-odd"><td>const std::vector&lt;std::string&gt; &amp; postags</td>
+<td>输入的词性序列</td>
+</tr>
+<tr class="row-even"><td>const std::vector&lt;std::string&gt; &amp; nes</td>
+<td>输入的命名实体序列</td>
+</tr>
+<tr class="row-odd"><td><div class="first last line-block">
+<div class="line">const std::vector&lt;</div>
+<div class="line-block">
+<div class="line">std::pair&lt;int, std::string&gt;</div>
+</div>
+<div class="line">&gt; &amp; parse</div>
+</div>
+</td>
+<td><div class="first last line-block">
+<div class="line">输入的依存句法结果</div>
+<div class="line">依存句法结果表示为长度为句子长的序列</div>
+<div class="line">序列中每个元素由两个成员组成，分别表示这个词的父节点的编号 <a class="footnote-reference" href="#f1" id="id13">[1]</a> 和依存关系类型</div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><div class="first last line-block">
+<div class="line">std::vector&lt;</div>
+<div class="line-block">
+<div class="line">std::pair&lt;</div>
+<div class="line-block">
+<div class="line">int,</div>
+<div class="line">std::vector&lt;</div>
+<div class="line-block">
+<div class="line">std::pair&lt;</div>
+<div class="line-block">
+<div class="line">std::string,</div>
+<div class="line">std::pair&lt;int, int&gt;</div>
+</div>
+<div class="line">&gt;</div>
+</div>
+<div class="line">&gt;</div>
+</div>
+<div class="line">&gt;</div>
+</div>
+<div class="line">&gt;</div>
+</div>
+</td>
+<td><div class="first last line-block">
+<div class="line">输出的语义角色标注结果</div>
+<div class="line">语义角色标注结果表示为一个句子中谓词个数的序列</div>
+<div class="line">序列中每个谓词有两个成员组成，第一个成员表示谓词的下标，第二个成员是一个列表</div>
+<div class="line">列表中每个元素表示与这个谓词对应的论元</div>
+<div class="line">每个论元由两个成员组成：</div>
+<div class="line">第一个成员代表这个论元的语义角色类型，</div>
+<div class="line">第二个成员代表这个论元的管辖范围，表示成一个二元组</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<p>返回值：</p>
+<p>返回结果中词的个数</p>
+</dd></dl>
+
+<p class="rubric">注</p>
+<table class="docutils footnote" frame="void" id="f1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id13">[1]</a></td><td>编号从0记起</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">使用编程接口</a><ul>
+<li><a class="reference internal" href="#id2">使用动态库</a><ul>
+<li><a class="reference internal" href="#windows-msvc">在 Windows (MSVC) 下使用动态库</a></li>
+<li><a class="reference internal" href="#linux">在 Linux 下使用动态库</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id4">分词接口</a><ul>
+<li><a class="reference internal" href="#id5">示例程序</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id6">词性标注接口</a><ul>
+<li><a class="reference internal" href="#id7">示例程序</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id8">命名实体识别接口</a><ul>
+<li><a class="reference internal" href="#id9">示例程序</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id10">依存句法分析接口</a><ul>
+<li><a class="reference internal" href="#id11">示例程序</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id12">语义角色标注接口</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="ltptest.html"
+                        title="previous chapter">使用ltp_test和xxx_cmdline</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="ltpserver.html"
+                        title="next chapter">使用ltp_server</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/api.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="ltpserver.html" title="使用ltp_server"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ltptest.html" title="使用ltp_test和xxx_cmdline"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LTP 3.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015, HIT-SCIR.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

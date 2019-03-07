@@ -1,0 +1,478 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>使用ltp_test和xxx_cmdline &#8212; LTP 3.3 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="使用编程接口" href="api.html" />
+    <link rel="prev" title="使用 Docker 中的LTP" href="install.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="api.html" title="使用编程接口"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="install.html" title="使用 Docker 中的LTP"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LTP 3.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ltp-testxxx-cmdline">
+<h1>使用ltp_test和xxx_cmdline<a class="headerlink" href="#ltp-testxxx-cmdline" title="Permalink to this headline">¶</a></h1>
+<p>一般来讲，基于统计机器学习方法构建的自然语言处理工具通常包括两部分，即：算法逻辑以及模型。模型从数据中学习而得，通常保存在文件中以持久化；而算法逻辑则与程序对应。</p>
+<div class="section" id="ltp">
+<span id="ltpmodel-reference-label"></span><h2>LTP模型文件<a class="headerlink" href="#ltp" title="Permalink to this headline">¶</a></h2>
+<p>LTP模型文件可以从以下渠道获取:</p>
+<ul class="simple">
+<li><a class="reference external" href="http://pan.baidu.com/share/link?shareid=1988562907&amp;uk=2738088569">百度云</a> 当前模型版本3.3.1</li>
+</ul>
+<p>LTP提供的模型包括:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="48%" />
+<col width="52%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">模型名</th>
+<th class="head">说明</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="file docutils literal notranslate"><span class="pre">cws.model</span></code></td>
+<td>分词模型，单文件</td>
+</tr>
+<tr class="row-odd"><td><code class="file docutils literal notranslate"><span class="pre">pos.model</span></code></td>
+<td>词性标注模型，单文件</td>
+</tr>
+<tr class="row-even"><td><code class="file docutils literal notranslate"><span class="pre">ner.model</span></code></td>
+<td>命名实体识别模型，单文件</td>
+</tr>
+<tr class="row-odd"><td><code class="file docutils literal notranslate"><span class="pre">parser.model</span></code></td>
+<td>依存句法分析模型，单文件</td>
+</tr>
+<tr class="row-even"><td><code class="file docutils literal notranslate"><span class="pre">srl_data/</span></code></td>
+<td>语义角色标注模型，多文件</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="ltp-test">
+<h2>ltp_test主程序<a class="headerlink" href="#ltp-test" title="Permalink to this headline">¶</a></h2>
+<p><code class="file docutils literal notranslate"><span class="pre">ltp_test</span></code> 是一个整合LTP中各模块的命令行工具。它完成加载模型，依照指定方法执行分析的功能。<code class="file docutils literal notranslate"><span class="pre">ltp_test</span></code> 加载的模型通过配置文件指定。编译后运行:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ./bin/ltp_test
+ltp_test in LTP 3.3.2 - (C) 2012-2016 HIT-SCIR
+The console application for Language Technology Platform.
+
+usage: ./ltp_test &lt;options&gt;
+
+options:
+  --threads arg           The number of threads [default=1].
+  --last-stage arg        The last stage of analysis. This option can be used
+                          when the user onlywants to perform early stage
+                          analysis, like only segment without postagging.value
+                          includes:
+                          - ws: Chinese word segmentation
+                          - pos: Part of speech tagging
+                          - ner: Named entity recognization
+                          - dp: Dependency parsing
+                          - srl: Semantic role labeling (equals to all)
+                          - all: The whole pipeline [default]
+  --input arg             The path to the input file.
+  --segmentor-model arg   The path to the segment model
+                          [default=ltp_data/cws.model].
+  --segmentor-lexicon arg The path to the external lexicon in segmentor
+                          [optional].
+  --postagger-model arg   The path to the postag model
+                          [default=ltp_data/pos.model].
+  --postagger-lexicon arg The path to the external lexicon in postagger
+                          [optional].
+  --ner-model arg         The path to the NER model [default=ltp_data/ner.model
+                          ].
+  --parser-model arg      The path to the parser model
+                          [default=ltp_data/parser.model].
+  --srl-data arg          The path to the SRL model directory
+                          [default=ltp_data/srl_data/].
+  --debug-level arg       The debug level.
+  -h [ --help ]           Show help information
+</pre></div>
+</div>
+<p>ltp_test通过命令行参数指定分析任务与模型路径。其中，</p>
+<ul class="simple">
+<li>segmentor-model：指定分词模型</li>
+<li>segmentor-lexicon：指定分词词典路径</li>
+<li>postagger-model：指定词性标注模型</li>
+<li>postagger-lexicon：指定词性标注词典路径</li>
+<li>parser-model：指定依存句法分析模型</li>
+<li>ner-model：指定命名实体识别模型</li>
+<li>srl-data：指定语言角色标注模型</li>
+<li>threads：指定线程数</li>
+<li>input：指定输入文件，如果输入文件未指定或打开失败，将使用标准输入</li>
+<li>last-stage：指定分析的最终步骤。这一参数将在 <a class="reference internal" href="#pipeline-reference-label"><span class="std std-ref">Pipeline与last-stage参数</span></a> 中详细说明</li>
+</ul>
+<p>分析结果以xml格式显示在stdout中。关于xml如何表示分析结果，请参考理解 <a class="reference internal" href="ltpserver.html#ltml-reference-label"><span class="std std-ref">数据表示</span></a> 一节。</p>
+<div class="section" id="pipelinelast-stage">
+<span id="pipeline-reference-label"></span><h3>Pipeline与last-stage参数<a class="headerlink" href="#pipelinelast-stage" title="Permalink to this headline">¶</a></h3>
+<p>分词、词性标注、句法分析一系列任务之间存在依赖关系。举例来讲，对于词性标注，必须在分词结果之上进行才有意义。LTP中提供的5种分析之间的依赖关系如下所示：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="48%" />
+<col width="21%" />
+<col width="31%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">任务</th>
+<th class="head">标记</th>
+<th class="head">依赖</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>分词</td>
+<td>ws</td>
+<td>无</td>
+</tr>
+<tr class="row-odd"><td>词性标注</td>
+<td>pos</td>
+<td>ws</td>
+</tr>
+<tr class="row-even"><td>依存句法分析</td>
+<td>dp</td>
+<td>pos</td>
+</tr>
+<tr class="row-odd"><td>命名实体识别</td>
+<td colspan="2">ner   | pos</td>
+</tr>
+<tr class="row-even"><td>语义角色标注</td>
+<td>srl</td>
+<td>dp, ner</td>
+</tr>
+</tbody>
+</table>
+<p>默认情况下，LTP将进行至语义角色标注的分析。但是，对于一部分用户，某些分析并不必要。举例来讲，如果用户只需进行词性标注，则ltp_test的pipeline分析只需进行到pos，<a href="#id2"><span class="problematic" id="id3">`</span></a>last-stage`用来指明分析的最后状态。同时，如果`last-stage`指定为pos，句法分析、命名实体识别和语义角色标注的模型将不被加载。</p>
+<p>注： last-stage: 特别的，可以使用 “|” 来分割多个最终目标。例如需要ner和parser就设置为 “ner|dp”。</p>
+</div>
+</div>
+<div class="section" id="xxx-cmdline">
+<span id="xxxcmdline-reference-label"></span><h2>xxx_cmdline<a class="headerlink" href="#xxx-cmdline" title="Permalink to this headline">¶</a></h2>
+<p>除了 <code class="code docutils literal notranslate"><span class="pre">ltp_test</span></code> 将全部分析器整合起来，LTP也提供拆分各模块单独分析的命令行程序。他们包括：</p>
+<ul class="simple">
+<li><code class="file docutils literal notranslate"><span class="pre">cws_cmdline</span></code> ：分词命令行</li>
+<li><code class="file docutils literal notranslate"><span class="pre">pos_cmdline</span></code> ：词性标注命令行</li>
+<li><code class="file docutils literal notranslate"><span class="pre">par_cmdline</span></code> ：句法分析命令行</li>
+<li><code class="file docutils literal notranslate"><span class="pre">ner_cmdline</span></code> ：命名实体识别命令行</li>
+</ul>
+<p>xxx_cmdline的主要目标是提供不同于xml，同时可自由组合的语言分析模块。举在已经切分好的结果上做词性标注为例。:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cat input
+这 是 测试 文本 。
+$ cat input | ./bin/pos_cmdline --postagger-model ./ltp_data/pos.model
+TRACE: Model is loaded
+TRACE: Running 1 thread(s)
+WARN: Cann&#39;t open file! use stdin instead.
+这_r    是_v    测试_v  文本_n  。_wp
+TRACE: consume 0.000832081 seconds.
+</pre></div>
+</div>
+<p>关于各模块的用法，与ltp_test基本类似。细节请参考 <code class="code docutils literal notranslate"><span class="pre">xxx_cmdline</span> <span class="pre">-h</span></code>。</p>
+</div>
+<div class="section" id="id4">
+<h2>细节<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ltprestrict-reference-label">
+<span id="id5"></span><h3>长度限制<a class="headerlink" href="#ltprestrict-reference-label" title="Permalink to this headline">¶</a></h3>
+<p>为了防止输入过长句子对稳定性造成影响。ltp限制用户输入字数少于1024字，分词结果少于256词。</p>
+</div>
+<div class="section" id="ltpexlex-reference-label">
+<span id="id6"></span><h3>外部词典<a class="headerlink" href="#ltpexlex-reference-label" title="Permalink to this headline">¶</a></h3>
+<p>分词外部词典样例如下所示。每个制定一个词。例如</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">苯并芘</span>
+<span class="n">亚硝酸盐</span>
+</pre></div>
+</div>
+<p>词性标注外部词典样例如下所示。每行指定一个词，第一列指定单词，第二列之后指定该词的候选词性（可以有多项，每一项占一列），列与列之间用空格区分。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>雷人 v a
+】 wp
+</pre></div>
+</div>
+<p>ltp项目中可以使用外部词典的模块包括</p>
+<ul class="simple">
+<li><code class="file docutils literal notranslate"><span class="pre">./bin/ltp_test</span></code> ：分词、词性外部词典</li>
+<li><code class="file docutils literal notranslate"><span class="pre">./bin/ltp_server</span></code> ：分词、词性外部词典</li>
+<li><code class="file docutils literal notranslate"><span class="pre">./bin/examples/cws_cmdline</span></code> ：分词外部词典</li>
+<li><code class="file docutils literal notranslate"><span class="pre">./bin/examples/pos_cmdline</span></code> ：词性外部词典</li>
+<li><code class="file docutils literal notranslate"><span class="pre">./tools/train/otcws</span></code> ：分词外部词典</li>
+<li><code class="file docutils literal notranslate"><span class="pre">./tools/train/otpos</span></code> ：词性外部词典</li>
+</ul>
+</div>
+<div class="section" id="window">
+<h3>Window动态链接库<a class="headerlink" href="#window" title="Permalink to this headline">¶</a></h3>
+<p>在Window下首次运行LTP会提示找不到动态链接库，这时请将编译产生的lib/*.dll拷贝到bin/Release/下，即可正常运行。</p>
+</div>
+<div class="section" id="id7">
+<h3>编码以及显示<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>LTP的所有模型文件均使用UTF8 <a class="footnote-reference" href="#f1" id="id8">[1]</a> 编码训练，故请确保待分析文本的编码为UTF8格式。</p>
+</div>
+</div>
+<div class="section" id="id9">
+<h2>兼容性测试<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<p>当前版本LTP在以下一些平台和编译器环境下通过测试</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="10%" />
+<col width="10%" />
+<col width="11%" />
+<col width="11%" />
+<col width="14%" />
+<col width="11%" />
+<col width="11%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">系统</th>
+<th class="head">编译器</th>
+<th class="head">版本</th>
+<th class="head">ltp_test</th>
+<th class="head">训练套件</th>
+<th class="head">ltp_server</th>
+<th class="head">单元测试</th>
+<th class="head">模型加载</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Linux (64bit)</td>
+<td>gnu-c++</td>
+<td>4.4</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>通过</td>
+</tr>
+<tr class="row-odd"><td>Linux (64bit)</td>
+<td>gnu-c++</td>
+<td>4.6</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>通过</td>
+</tr>
+<tr class="row-even"><td>Linux (64bit)</td>
+<td>gnu-c++</td>
+<td>4.7</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>通过</td>
+</tr>
+<tr class="row-odd"><td>Linux (64bit)</td>
+<td>gnu-c++</td>
+<td>4.8</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>通过</td>
+</tr>
+<tr class="row-even"><td>Linux (64bit)</td>
+<td>gnu-c++</td>
+<td>4.9</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>通过</td>
+</tr>
+<tr class="row-odd"><td>Linux (64bit)</td>
+<td>gnu-c++</td>
+<td>5.3</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>不支持</td>
+<td>通过</td>
+</tr>
+<tr class="row-even"><td>Linux (64bit)</td>
+<td>clang</td>
+<td>3.4</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>不支持</td>
+<td>通过</td>
+</tr>
+<tr class="row-odd"><td>Linux (64bit)</td>
+<td>clang</td>
+<td>3.5</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>不支持</td>
+<td>通过</td>
+</tr>
+<tr class="row-even"><td>Linux (64bit)</td>
+<td>clang</td>
+<td>3.6</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>不支持</td>
+<td>通过</td>
+</tr>
+<tr class="row-odd"><td>Windows (64bit)</td>
+<td>MSVC</td>
+<td>18/vs13</td>
+<td>支持</td>
+<td>支持</td>
+<td>不支持</td>
+<td>不支持</td>
+<td>通过</td>
+</tr>
+<tr class="row-even"><td>Windows (64bit)</td>
+<td>MSVC</td>
+<td>19/vs15</td>
+<td>支持</td>
+<td>支持</td>
+<td>不支持</td>
+<td>不支持</td>
+<td>通过</td>
+</tr>
+<tr class="row-odd"><td>Cygwin (64bit)</td>
+<td>gnu-c++</td>
+<td>4.8</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>支持</td>
+<td>通过</td>
+</tr>
+<tr class="row-even"><td>mingw (64bit)</td>
+<td>gnu-c++</td>
+<td>4.7</td>
+<td>支持</td>
+<td>支持</td>
+<td>不支持</td>
+<td>不支持</td>
+<td>通过</td>
+</tr>
+<tr class="row-odd"><td>mingw (64bit)</td>
+<td>gnu-c++</td>
+<td>5.1</td>
+<td>支持</td>
+<td>支持</td>
+<td>不支持</td>
+<td>不支持</td>
+<td>通过</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">注</p>
+<table class="docutils footnote" frame="void" id="f1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id8">[1]</a></td><td>由于Windows终端采用gbk编码显示，运行 <code class="file docutils literal notranslate"><span class="pre">ltp_test</span></code> 后会在终端输出乱码。您可以将标准输出重定向到文件，以UTF8方式查看文件，就可以解决乱码的问题。</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">使用ltp_test和xxx_cmdline</a><ul>
+<li><a class="reference internal" href="#ltp">LTP模型文件</a></li>
+<li><a class="reference internal" href="#ltp-test">ltp_test主程序</a><ul>
+<li><a class="reference internal" href="#pipelinelast-stage">Pipeline与last-stage参数</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xxx-cmdline">xxx_cmdline</a></li>
+<li><a class="reference internal" href="#id4">细节</a><ul>
+<li><a class="reference internal" href="#ltprestrict-reference-label">长度限制</a></li>
+<li><a class="reference internal" href="#ltpexlex-reference-label">外部词典</a></li>
+<li><a class="reference internal" href="#window">Window动态链接库</a></li>
+<li><a class="reference internal" href="#id7">编码以及显示</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id9">兼容性测试</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="install.html"
+                        title="previous chapter">使用 Docker 中的LTP</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="api.html"
+                        title="next chapter">使用编程接口</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/ltptest.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="api.html" title="使用编程接口"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="install.html" title="使用 Docker 中的LTP"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LTP 3.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015, HIT-SCIR.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

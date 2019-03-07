@@ -46,7 +46,7 @@
 
 static int const stackLimit_g = 1000;
 #if __cplusplus >= 201103L
-thread_local static int stackDepth_g = 0;  // see readValue()
+static __thread int stackDepth_g = 0;  // see readValue()
 #else
 static int       stackDepth_g = 0;  // see readValue()
 #endif

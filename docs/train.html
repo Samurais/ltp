@@ -1,0 +1,317 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>使用训练套件 &#8212; LTP 3.3 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="实现原理与性能" href="theory.html" />
+    <link rel="prev" title="使用其他语言调用ltp" href="otherlanguage.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="theory.html" title="实现原理与性能"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="otherlanguage.html" title="使用其他语言调用ltp"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LTP 3.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>使用训练套件<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="otcws">
+<h2>分词训练套件otcws用法<a class="headerlink" href="#otcws" title="Permalink to this headline">¶</a></h2>
+<p>otcws是ltp分词模型的训练套件，用户可以使用otcws训练获得ltp的分词模型。otcws支持从人工切分数据中训练分词模型和调用分词模型对句子进行切分。人工切分的句子的样例如下：:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>对外      ，       他们      代表      国家      。
+</pre></div>
+</div>
+<p>编译之后，在tools/train下面会产生名为otcws的二进制程序。运行可见:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ./tools/train/otcws
+otcws in LTP 3.3.2 - (C) 2012-2016 HIT-SCIR
+Training and testing suite for Chinese word segmentation
+
+usage: ./otcws [learn|customized-learn|test|customized-test|dump] &lt;options&gt;
+</pre></div>
+</div>
+<p>其中第二个参数调用训练(learn)或测试(test)或可视化模型(dump)，对于customized-learn以及customized-test，请参考 <a class="reference internal" href="theory.html#customized-cws-reference-label"><span class="std std-ref">个性化分词</span></a></p>
+<div class="section" id="id2">
+<h3>训练一个模型<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>如果进行模型训练(learn)，:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ./tools/train/otcws learn
+otcws(learn) in LTP 3.3.2 - (C) 2012-2016 HIT-SCIR
+Training suite for Chinese word segmentation
+
+usage: ./otcws learn &lt;options&gt;
+
+options:
+  --model arg                  The prefix of the model file, model will be
+                               stored as model.$iter.
+  --reference arg              The path to the reference file.
+  --development arg            The path to the development file.
+  --algorithm arg              The learning algorithm
+                                - ap: averaged perceptron
+                                - pa: passive aggressive [default]
+  --max-iter arg               The number of iteration [default=10].
+  --rare-feature-threshold arg The threshold for rare feature, used in model
+                               truncation. [default=0]
+  --dump-details arg           Save the detailed model, used in incremental
+                               training. [default=false]
+  -h [ --help ]                Show help information
+</pre></div>
+</div>
+<p>其中：</p>
+<ul class="simple">
+<li>reference：指定训练集文件</li>
+<li>development：指定开发集文件</li>
+<li>algorithm：指定参数学习方法，现在LTP在线学习框架支持两种参数学习方法，分别是passive aggressive(pa)和average perceptron(ap)。</li>
+<li>model：指定输出模型文件名前缀，模型采用model.$iter方式命名</li>
+<li>max-iter：指定最大迭代次数</li>
+<li>rare-feature-threshold：模型裁剪力度，如果rare-feature-threshold为0，则只去掉为0的特征；rare-feature-threshold；如果大于0时将进一步去掉更新次数低于阈值的特征。关于模型裁剪算法细节，请参考 <a class="reference internal" href="theory.html#truncate-reference-label"><span class="std std-ref">模型裁剪</span></a> 部分。</li>
+<li>dump-details：指定保存模型时输出所有模型信息，这一参数用于 <a class="reference internal" href="theory.html#customized-cws-reference-label"><span class="std std-ref">个性化分词</span></a> ，具体请参考 <a class="reference internal" href="theory.html#customized-cws-reference-label"><span class="std std-ref">个性化分词</span></a> 。</li>
+</ul>
+<p>需要注意的是，reference和development都需要是人工切分的句子。</p>
+</div>
+<div class="section" id="id3">
+<h3>测试模型/切分句子<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>如果进行模型测试(test)，:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ./tools/train/otcws test
+otcws(test) in LTP 3.3.2 - (C) 2012-2016 HIT-SCIR
+Testing suite for Chinese word segmentation
+
+usage: ./otcws test &lt;options&gt;
+
+options:
+  --model arg           The path to the model file.
+  --lexicon arg         The lexicon file, (optional, if configured, constrained
+                        decoding will be performed).
+  --input arg           The path to the reference file.
+  --evaluate arg        if configured, perform evaluation, input words in
+                        sentence should be separated by space.
+  -h [ --help ]         Show help information
+</pre></div>
+</div>
+<p>其中，</p>
+<ul class="simple">
+<li>model：指定模型文件位置</li>
+<li>lexicon：指定外部词典位置，这个参数是可选的</li>
+<li>input：指定输入文件</li>
+<li>evaluate：true或false，指定是否进行切词结果准确率的评价。如果进行评价，输入的文件应该是人工切分的数据。</li>
+</ul>
+<p>外部词典 (lexicon) 格式请参考 <a class="reference internal" href="ltptest.html#ltpexlex-reference-label"><span class="std std-ref">外部词典</span></a> 。</p>
+<p>切分结果将输入到标准io中。</p>
+</div>
+</div>
+<div class="section" id="otpos">
+<h2>词性标注训练套件otpos用法<a class="headerlink" href="#otpos" title="Permalink to this headline">¶</a></h2>
+<p>otpos是ltp分词模型的训练套件，用户可以使用otpos训练获得ltp的分词模型。otpos支持从人工切分并标注词性的数据中训练词性标注模型和调用词性标注模型对切分好的句子进行词性标注。人工标注的词性标注句子样例如下：:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>对外_v    ，_wp    他们_r    代表_v    国家_n    。_wp
+</pre></div>
+</div>
+<p>编译之后，在tools/train下面会产生名为otpos的二进制程序。otpos的使用方法与otcws非常相似，同名参数含义也完全相同。其中不同之处在于词性标注模块的外部词典含义与分词的外部词典含义不同。:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ./tools/train/otpos test
+otpos(test) in LTP 3.3.2 - (C) 2012-2016 HIT-SCIR
+Testing suite for Part of Speech Tagging
+
+usage: ./otpos test &lt;options&gt;
+
+options::
+  --model arg           The path to the model file.
+  --lexicon arg         The lexicon file, (optional, if configured, constrained
+                        decoding will be performed).
+  --input arg           The path to the reference file.
+  --evaluate arg        if configured, perform evaluation, input should contain
+                        &#39;_&#39; concatenated tag
+  -h [ --help ]         Show help information
+</pre></div>
+</div>
+<p>外部词典 (lexicon) 格式请参考 <a class="reference internal" href="ltptest.html#ltpexlex-reference-label"><span class="std std-ref">外部词典</span></a> 。</p>
+</div>
+<div class="section" id="otner">
+<h2>命名实体识别训练套件otner用法<a class="headerlink" href="#otner" title="Permalink to this headline">¶</a></h2>
+<p>otner是ltp命名实体识别模型的训练套件，用户可以使用otner训练获得ltp的命名实体识别模型。otner支持从人工标注的数据中训练命名实体识别模型和调用命名实体识别模型对句子进行标注。人工标注的句子的样例如下：:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">党中央</span><span class="o">/</span><span class="n">ni</span><span class="c1">#B-Ni 国务院/ni#E-Ni 要求/v#O ，/wp#O 动员/v#O 全党/n#O 和/c#O 全/a#O社会/n#O 的/u#O 力量/n#O</span>
+</pre></div>
+</div>
+<p>编译之后，在tools/train下面会产生名为otner的二进制程序。otner的使用方法与otcws非常相似，同名参数含义也完全相同。</p>
+</div>
+<div class="section" id="nndepparser">
+<h2>依存句法分析训练套件nndepparser用法<a class="headerlink" href="#nndepparser" title="Permalink to this headline">¶</a></h2>
+<p>nndepparser是ltp神经网络依存句法分析模型的训练套件，用户可以使用nndepparser训练获得ltp的依存句法分析模型。nndepparser分别支持从人工标注依存句法的数据中训练依存句法分析模型和调用依存句法分析模型对句子进行依存句法分析。人工标注的词性标注依存句法的句子遵从conll格式，其样例如下：:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1       对外    _       v       _       _       4       ADV     _       _
+2       ，      _       wp      _       _       1       WP      _       _
+3       他们    _       r       _       _       4       SBV     _       _
+4       代表    _       v       _       _       0       HED     _       _
+5       国家    _       n       _       _       4       VOB     _       _
+6       。      _       wp      _       _       4       WP      _       _
+</pre></div>
+</div>
+<p>编译之后，在tools/train下面会产生名为nndepparser的二进制程序。调用方法是:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">nndepparser</span> <span class="p">[</span><span class="n">learn</span><span class="o">|</span><span class="n">test</span><span class="p">]</span> <span class="o">&lt;</span><span class="n">options</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="parser">
+<h3>训练一个parser<a class="headerlink" href="#parser" title="Permalink to this headline">¶</a></h3>
+<p>运行./nndepparser learn，可见如下参数:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ./tools/train/nndepparser learn
+nndepparser(learn) in ltp 3.3.2 - (c) 2012-2016 hit-scir
+training suite for neural network parser
+usage: ./nndepparser learn &lt;options&gt;
+
+options:
+  --model arg               the path to the model.
+  --embedding arg           the path to the embedding file.
+  --reference arg           the path to the reference file.
+  --development arg         the path to the development file.
+
+  --init-range arg          the initialization range. [default=0.01]
+  --word-cutoff arg         the frequency of rare word. [default=1]
+  --max-iter arg            the number of max iteration. [default=20000]
+  --batch-size arg          the size of batch. [default=10000]
+  --hidden-size arg         the size of hidden layer. [default=200]
+  --embedding-size arg      the size of embedding. [default=50]
+  --features-number arg     the number of features. [default=48]
+  --precomputed-number arg  the number of precomputed. [default=100000]
+  --evaluation-stops arg    evaluation on per-iteration. [default=100]
+  --ada-eps arg             the eps in adagrad. [defautl=1e-6]
+  --ada-alpha arg           the alpha in adagrad. [default=0.01]
+  --lambda arg              the regularizer parameter. [default=1e-8]
+  --dropout-probability arg the probability for dropout. [default=0.5]
+  --oracle arg              the oracle type
+                             - static: the static oracle [default]
+                             - nondet: the non-deterministic oracle
+                             - explore: the explore oracle.
+  --save-intermediate arg   save the intermediate. [default=true]
+  --fix-embeddings arg      fix the embeddings. [default=false]
+  --use-distance arg        specify to use distance feature. [default=false]
+  --use-valency arg         specify to use valency feature. [default=false]
+  --use-cluster arg         specify to use cluster feature. [default=false]
+  --cluster arg             specify the path to the cluster file.
+  --root arg                the root tag. [default=root]
+  --verbose                 logging more details.
+  -h [ --help ]             show help information.
+</pre></div>
+</div>
+<p>nndepparser具有较多参数，但大部分与Chen and Manning (2014)中的定义一致。希望使用nndepparser的用户需要首先阅读其论文。
+另，经验表明，大部分参数采用默认值亦可取得较好的效果。
+所以在不能明确各参数含义的情况下，可以直接使用默认值。</p>
+<p>相较Chen and Manning (2014)，nndepparser中特有的参数包括：</p>
+<ul class="simple">
+<li>oracle：指定oracle函数类型，可选的oracle包括static，nondet和explore。一般来讲，explore效果最好，具体算法请参考Yoav et. al, (2014)</li>
+<li>use-distance：指定使用距离特征，具体参考Zhang and Nivre (2011)</li>
+<li>use-valency：指定使用valency特征，具体参考Zhang and Nivre (2011)</li>
+<li>use-cluster：指定使用词聚类特征，具体参考Guo et. al, (2015)</li>
+<li>root：根节点的deprel的类型，需要注意的是，当前版本nndepparser只能处理projective single-root的依存树。</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>参考文献<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Danqi Chen and Christopher Manning, 2014, A Fast and Accurate Dependency Parser using Neural Networks, In Proc. of <em>EMNLP2014</em></li>
+<li>Yue Zhang and Joakim Nivre, 2011, Transition-based Dependency Parsing with Rich Non-local Features, In Proc. of <em>ACL2011</em></li>
+<li>Yoav Goldberg, Francesco Sartorioand Giorgio Satta, 2014, A Tabular Method for Dynamic Oracles in Transition-Based Parsing, In <em>TACL2014</em></li>
+<li>Jiang Guo, Wanxiang Che, David Yarowsky, Haifeng Wang and Ting Liu, 2015, Cross-lingual Dependency Parsing Based on Distributed Representations, (to apper) In Proc. of <em>ACL2015</em></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">使用训练套件</a><ul>
+<li><a class="reference internal" href="#otcws">分词训练套件otcws用法</a><ul>
+<li><a class="reference internal" href="#id2">训练一个模型</a></li>
+<li><a class="reference internal" href="#id3">测试模型/切分句子</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#otpos">词性标注训练套件otpos用法</a></li>
+<li><a class="reference internal" href="#otner">命名实体识别训练套件otner用法</a></li>
+<li><a class="reference internal" href="#nndepparser">依存句法分析训练套件nndepparser用法</a><ul>
+<li><a class="reference internal" href="#parser">训练一个parser</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id4">参考文献</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="otherlanguage.html"
+                        title="previous chapter">使用其他语言调用ltp</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="theory.html"
+                        title="next chapter">实现原理与性能</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/train.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="theory.html" title="实现原理与性能"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="otherlanguage.html" title="使用其他语言调用ltp"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LTP 3.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015, HIT-SCIR.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,323 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>使用 Docker 中的LTP &#8212; LTP 3.3 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="使用ltp_test和xxx_cmdline" href="ltptest.html" />
+    <link rel="prev" title="开始使用LTP" href="begin.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="ltptest.html" title="使用ltp_test和xxx_cmdline"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="begin.html" title="开始使用LTP"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LTP 3.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="docker-ltp">
+<span id="install-label"></span><h1>使用 Docker 中的LTP<a class="headerlink" href="#docker-ltp" title="Permalink to this headline">¶</a></h1>
+<p>最简单的方式就是使用我们在docker中已经编译好的LTP服务。这种方式避免了多种不同系统编译安装时可能出现的各种问题，也避免了模型和代码匹配等问题。如果您希望快速部署LTP的接口服务器并使用。推荐这种方法。</p>
+<p>1. 安装docker，在`【docker官方下载地址】&lt;<a class="reference external" href="https://www.docker.com/community-edition">https://www.docker.com/community-edition</a>&gt;`_ 下载安装即可。如果您还没有了解docker是什么，可以参考`此处&lt;<a class="reference external" href="https://www.docker.com/what-docker">https://www.docker.com/what-docker</a>&gt;`_
+2.1 使用本仓库Dockerfile构建镜像，仅下载Dockerfile文件，放在一个空文件夹下，并在该文件夹下执行:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">build</span> <span class="o">-</span><span class="n">t</span> <span class="n">ltp</span><span class="o">/</span><span class="n">ltp</span> <span class="o">.</span> <span class="c1"># 由于网络原因可能中途失败。多执行几次即可。</span>
+</pre></div>
+</div>
+<p>2.2 在此处下载最新的LTP的镜像文件。` ltp3.4.0-docker &lt;<a class="reference external" href="http://osr393crn.bkt.clouddn.com/docker/ltp_3_4_0.tar">http://osr393crn.bkt.clouddn.com/docker/ltp_3_4_0.tar</a>&gt;`_ 下载的文件较大，下载完成后比较其(md5=f42d128a20e26a4b8c2edf63932fed67)核对是否下载正确。注意此步骤与2.1功能相同，尝试一种可行方案即可。更推荐2.1方案。:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">load</span> <span class="o">-</span><span class="n">i</span> <span class="n">ltp_3_4_0</span><span class="o">.</span><span class="n">tar</span>
+</pre></div>
+</div>
+<ol class="arabic" start="3">
+<li><p class="first">在配置中给docker运行给予足够大的内存。我们这里设置了6G运行内存。</p>
+</li>
+<li><p class="first">使用如下命令启动容器，这里的8080是映射到本地的端口号，可以根据需要改动为其他未占用的端口:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">run</span> <span class="o">-</span><span class="n">d</span> <span class="o">-</span><span class="n">p</span> <span class="mi">8080</span><span class="p">:</span><span class="mi">12345</span> <span class="n">ltp</span><span class="o">/</span><span class="n">ltp</span> <span class="o">/</span><span class="n">ltp_server</span> <span class="o">--</span><span class="n">last</span><span class="o">-</span><span class="n">stage</span> <span class="nb">all</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">使用如下命令测试服务器是否部署成功。启动后可能需要等待数十秒的模型加载时间。:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">curl</span> <span class="o">-</span><span class="n">d</span> <span class="s2">&quot;s=他点头表示同意我的意见。&amp;f=xml&amp;t=all&quot;</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="mf">127.0</span><span class="o">.</span><span class="mf">0.1</span><span class="p">:</span><span class="mi">8080</span><span class="o">/</span><span class="n">ltp</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">按照文档进行接口访问即可</p>
+</li>
+</ol>
+</div>
+<div class="section" id="ltp">
+<h1>LTP 的源码编译安装<a class="headerlink" href="#ltp" title="Permalink to this headline">¶</a></h1>
+<p>如果你想要使用LTP，必须拥有两部分内容</p>
+<ul class="simple">
+<li>LTP项目文件</li>
+<li>LTP模型文件</li>
+</ul>
+<p>你可以从以下链接获得最新的LTP项目源码。</p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/HIT-SCIR/ltp/releases">Github项目托管</a></li>
+</ul>
+<p>如果你是windows用户，你也可以跳过从源代码编译的环节，从以下链接获得编译好的二进制文件</p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/HIT-SCIR/ltp/releases">Github项目托管</a></li>
+</ul>
+<p>你可以从以下链接获得LTP的模型文件</p>
+<ul class="simple">
+<li><a class="reference external" href="http://pan.baidu.com/share/link?shareid=1988562907&amp;uk=2738088569">百度云</a> 当前模型版本3.3.1</li>
+</ul>
+<div class="section" id="cmake">
+<h2>依赖：CMake<a class="headerlink" href="#cmake" title="Permalink to this headline">¶</a></h2>
+<p>LTP使用编译工具CMake构建项目。在安装LTP之前，你需要首先安装CMake。CMake可以在 <a class="reference external" href="http://www.cmake.org">CMake项目官网</a> 。如果你是Windows用户，请下载CMake的二进制安装包；如果你是Linux，Mac OS或Cygwin的用户，可以通过编译源码的方式安装CMake，当然，你也可以使用Linux的软件源来安装。</p>
+</div>
+<div class="section" id="windows-msvc">
+<h2>在 Windows (MSVC) 下编译<a class="headerlink" href="#windows-msvc" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="vc-project">
+<h3>第一步：构建 VC Project<a class="headerlink" href="#vc-project" title="Permalink to this headline">¶</a></h3>
+<p>在项目文件夹下新建一个名为 <code class="file docutils literal notranslate"><span class="pre">build</span></code> 的目录，打开CMake Gui，在source code中填入项目目录，在binaries中填入 <code class="file docutils literal notranslate"><span class="pre">build</span></code> 目录。然后Configure -&gt; Generate。</p>
+<img alt="http://ir.hit.edu.cn/~yjliu/image/2013-7-12-cmake-win-setup.png" src="http://ir.hit.edu.cn/~yjliu/image/2013-7-12-cmake-win-setup.png" />
+<p>或者在命令行build目录下运行:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cmake</span> <span class="o">..</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id4">
+<h3>第二步：编译<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>构建后得到ALL_BUILD、RUN_TESTS、ZERO_CHECK三个VC Project。使用VS打开ALL_BUILD项目，选择Release <a class="footnote-reference" href="#f1" id="id5">[1]</a> 方式构建项目。</p>
+</div>
+</div>
+<div class="section" id="linux-macos-cygwin">
+<h2>在 Linux, macOS 和 Cygwin 下编译<a class="headerlink" href="#linux-macos-cygwin" title="Permalink to this headline">¶</a></h2>
+<p>Linux、Mac OSX和Cygwin的用户，可以直接在项目根目录下使用命令进行编译:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">configure</span>
+<span class="n">make</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id6">
+<h2>编译结果说明<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<p>编译成功后，会在 <code class="file docutils literal notranslate"><span class="pre">bin</span></code> 目录下生成以下二进制程序：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="48%" />
+<col width="52%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">程序名</th>
+<th class="head">说明</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="file docutils literal notranslate"><span class="pre">ltp_test</span></code></td>
+<td>LTP主程序</td>
+</tr>
+<tr class="row-odd"><td><code class="file docutils literal notranslate"><span class="pre">ltp_server</span></code> <a class="footnote-reference" href="#f2" id="id7">[2]</a></td>
+<td>LTP Server</td>
+</tr>
+</tbody>
+</table>
+<p>在 <code class="file docutils literal notranslate"><span class="pre">bin/examples</span></code> 目录下生成以下二进制程序:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="48%" />
+<col width="52%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">程序名</th>
+<th class="head">说明</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="file docutils literal notranslate"><span class="pre">cws_cmdline</span></code></td>
+<td>分词模块命令行程序</td>
+</tr>
+<tr class="row-odd"><td><code class="file docutils literal notranslate"><span class="pre">pos_cmdline</span></code></td>
+<td>词性标注模块命令行程序</td>
+</tr>
+<tr class="row-even"><td><code class="file docutils literal notranslate"><span class="pre">ner_cmdline</span></code></td>
+<td>命名实体识别模块命令行程序</td>
+</tr>
+<tr class="row-odd"><td><code class="file docutils literal notranslate"><span class="pre">par_cmdline</span></code></td>
+<td>依存句法分析模块命令行程序</td>
+</tr>
+</tbody>
+</table>
+<p>在 <code class="file docutils literal notranslate"><span class="pre">lib</span></code> 目录下生成以下静态链接库 <a class="footnote-reference" href="#f3" id="id8">[3]</a> :</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="48%" />
+<col width="52%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">程序名</th>
+<th class="head">说明</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="file docutils literal notranslate"><span class="pre">splitsnt.lib</span></code></td>
+<td>分句lib库</td>
+</tr>
+<tr class="row-odd"><td><code class="file docutils literal notranslate"><span class="pre">segmentor.lib</span></code></td>
+<td>分词lib库</td>
+</tr>
+<tr class="row-even"><td><code class="file docutils literal notranslate"><span class="pre">postagger.lib</span></code></td>
+<td>词性标注lib库</td>
+</tr>
+<tr class="row-odd"><td><code class="file docutils literal notranslate"><span class="pre">parser.lib</span></code></td>
+<td>依存句法分析lib库</td>
+</tr>
+<tr class="row-even"><td><code class="file docutils literal notranslate"><span class="pre">ner.lib</span></code></td>
+<td>命名实体识别lib库</td>
+</tr>
+<tr class="row-odd"><td><code class="file docutils literal notranslate"><span class="pre">srl.lib</span></code></td>
+<td>语义角色标注lib库</td>
+</tr>
+</tbody>
+</table>
+<p>在 <code class="file docutils literal notranslate"><span class="pre">tools/train</span></code> 目录下生成以下二进制程序:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="48%" />
+<col width="52%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">程序名</th>
+<th class="head">说明</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="file docutils literal notranslate"><span class="pre">otcws</span></code></td>
+<td>分词训练和测试套件</td>
+</tr>
+<tr class="row-odd"><td><code class="file docutils literal notranslate"><span class="pre">otpos</span></code></td>
+<td>词性标注训练和测试套件</td>
+</tr>
+<tr class="row-even"><td><code class="file docutils literal notranslate"><span class="pre">otner</span></code></td>
+<td>命名实体识别训练和测试套件</td>
+</tr>
+<tr class="row-odd"><td><code class="file docutils literal notranslate"><span class="pre">nndepparser</span></code></td>
+<td>依存句法分析训练和测试套件</td>
+</tr>
+<tr class="row-even"><td><code class="file docutils literal notranslate"><span class="pre">lgsrl</span></code></td>
+<td>语义角色标注训练和测试套件</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">注</p>
+<table class="docutils footnote" frame="void" id="f1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[1]</a></td><td><code class="file docutils literal notranslate"><span class="pre">boost::multi_array</span></code> 与VS2010不兼容的bug已经在3.1.0中得到修复，3.1.x及以上版本已经可以使用Debug方式构建，但出于效率考虑，仍旧建议使用Release方式构建。</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="f2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id7">[2]</a></td><td>在window版本中 <code class="file docutils literal notranslate"><span class="pre">ltp_server</span></code> 、<code class="file docutils literal notranslate"><span class="pre">Maxent</span></code> 、<code class="file docutils literal notranslate"><span class="pre">SRLExtract</span></code> 、<code class="file docutils literal notranslate"><span class="pre">SRLGetInstance</span></code> 并不被编译。</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="f3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id8">[3]</a></td><td>window下产生的静态库的后缀是.lib，linux下产生的静态库的后缀是.a</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">使用 Docker 中的LTP</a></li>
+<li><a class="reference internal" href="#ltp">LTP 的源码编译安装</a><ul>
+<li><a class="reference internal" href="#cmake">依赖：CMake</a></li>
+<li><a class="reference internal" href="#windows-msvc">在 Windows (MSVC) 下编译</a><ul>
+<li><a class="reference internal" href="#vc-project">第一步：构建 VC Project</a></li>
+<li><a class="reference internal" href="#id4">第二步：编译</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#linux-macos-cygwin">在 Linux, macOS 和 Cygwin 下编译</a></li>
+<li><a class="reference internal" href="#id6">编译结果说明</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="begin.html"
+                        title="previous chapter">开始使用LTP</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="ltptest.html"
+                        title="next chapter">使用ltp_test和xxx_cmdline</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/install.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="ltptest.html" title="使用ltp_test和xxx_cmdline"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="begin.html" title="开始使用LTP"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LTP 3.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015, HIT-SCIR.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

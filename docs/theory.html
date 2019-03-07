@@ -1,0 +1,512 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>实现原理与性能 &#8212; LTP 3.3 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="常见问题" href="faq.html" />
+    <link rel="prev" title="使用训练套件" href="train.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="faq.html" title="常见问题"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="train.html" title="使用训练套件"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LTP 3.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>实现原理与性能<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id2">
+<h2>在线学习算法框架<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>在机器学习领域，在线学习(Online learning)指每次通过一个训练实例学习模型的学习方法。在线学习的目的是正确预测训练实例的标注。在线学习最重要的一个特点是，当一次预测完成时，其正确结果便被获得，这一结果可直接用来修正模型。</p>
+<img alt="http://ir.hit.edu.cn/~yjliu/image/2013-7-12-ot-framework.jpg" src="http://ir.hit.edu.cn/~yjliu/image/2013-7-12-ot-framework.jpg" />
+<p>在自然语言处理领域，在线学习已经被广泛地应用在分词、词性标注、依存句法分析等结构化学习任务中。</p>
+</div>
+<div class="section" id="truncate-reference-label">
+<span id="id3"></span><h2>模型裁剪<a class="headerlink" href="#truncate-reference-label" title="Permalink to this headline">¶</a></h2>
+<p>在LTP中，词性标注、句法分析两个模块还存在模型比较大的问题。为了缩小模型的大小，我们参考 <a class="reference external" href="http://www.cs.bgu.ac.il/~yoavg/publications/acl2011sparse.pdf">Learning Sparser Perceptron Model</a> ，将其中提到的特征裁剪策略加入了LTP。</p>
+<p>具体来讲，LTP特征映射是以特征前缀为单位进行组织的。对应的，我们裁剪了同一前缀下更新次数较少的所有特征。</p>
+</div>
+<div class="section" id="id4">
+<h2>测试设置<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>下述实验的测试硬件环境如下：</p>
+<ul class="simple">
+<li>CPU: Intel(R) Xeon(R) CPU E5-2620 0 &#64; 2.00GHz</li>
+<li>RAM: 128G</li>
+</ul>
+</div>
+<div class="section" id="id5">
+<h2>分词模块<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>在LTP中，我们将分词任务建模为基于字的序列标注问题。对于输入句子的字序列，模型给句子中的每个字标注一个标识词边界的标记。在LTP中，我们采用的标记集如附录所示。</p>
+<p>对于模型参数，我们采用在线机器学习算法框架从标注数据中学习参数。对于分词模型，我们使用的基本模型特征有：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="22%" />
+<col width="78%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">类别</th>
+<th class="head">特征</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>char-unigram</td>
+<td>ch[-2], ch[-1], ch[0], ch[1], ch[2]</td>
+</tr>
+<tr class="row-odd"><td>char-bigram</td>
+<td>ch[-2]ch[-1], ch[-1]ch[0],ch[0]ch[1],ch[1]ch[2]</td>
+</tr>
+<tr class="row-even"><td>dulchar</td>
+<td>ch[-1]=ch[0]?</td>
+</tr>
+<tr class="row-odd"><td>dul2char</td>
+<td>ch[-2]=ch[0]?</td>
+</tr>
+</tbody>
+</table>
+<p>同时，为了提高互联网文本特别是微博文本的处理性能。我们在分词系统中加入如下一些优化策略：</p>
+<ul class="simple">
+<li>英文、URI一类特殊词识别规则</li>
+<li>利用空格等自然标注线索</li>
+<li>在统计模型中融入词典信息</li>
+<li>从大规模未标注数据中统计的字间互信息、上下文丰富程度</li>
+</ul>
+<p>在统计模型中融合词典的方法是将最大正向匹配得到的词特征</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="38%" />
+<col width="62%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">类别</th>
+<th class="head">特征</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>begin-of-lexicon-word</td>
+<td>ch[0] is preffix of words in lexicon?</td>
+</tr>
+<tr class="row-odd"><td>middle-of-lexicon-word</td>
+<td>ch[0] is middle of words in lexicon?</td>
+</tr>
+<tr class="row-even"><td>end-of-lexicon-word</td>
+<td>ch[0] is suffix of words in lexicon?</td>
+</tr>
+</tbody>
+</table>
+<p>基础模型在人民日报测试数据上的性能如下：</p>
+<p>语料信息：人民日报1998年2月-6月(后10%数据作为开发集)作为训练数据，1月作为测试数据。</p>
+<ul>
+<li><p class="first">准确率为：</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="26%" />
+<col width="26%" />
+<col width="26%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">P</th>
+<th class="head">R</th>
+<th class="head">F</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>开发集</td>
+<td>0.979291</td>
+<td>0.978217</td>
+<td>0.978715</td>
+</tr>
+<tr class="row-odd"><td>测试集</td>
+<td>0.979109</td>
+<td>0.977561</td>
+<td>0.978335</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</li>
+<li><p class="first">测试程序：cws_cmdline</p>
+</li>
+<li><p class="first">运行时内存：175MB</p>
+</li>
+<li><p class="first">速度：161.97KB/sec</p>
+</li>
+</ul>
+</div>
+<div class="section" id="customized-cws-reference-label">
+<span id="id6"></span><h2>个性化分词<a class="headerlink" href="#customized-cws-reference-label" title="Permalink to this headline">¶</a></h2>
+<p>个性化分词是LTP的特色功能。个性化分词为了解决测试数据切换到如小说、财经等不同于新闻领域的领域。
+在切换到新领域时，用户只需要标注少量数据。
+个性化分词会在原有新闻数据基础之上进行增量训练。
+从而达到即利用新闻领域的丰富数据，又兼顾目标领域特殊性的目的。</p>
+<div class="section" id="id7">
+<h3>准备基础模型<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>用户可以从百度云托管上获得符合北大切词规范的基础模型。
+如果需要利用其它切词规范的数据作为基础模型，使用 <code class="file docutils literal notranslate"><span class="pre">./tools/train/otcws</span> <span class="pre">learn</span></code> 训练模型时需要指定 <code class="code docutils literal notranslate"><span class="pre">--dump-details</span></code> 选项为true。</p>
+</div>
+<div class="section" id="id8">
+<h3>个性化训练<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<p>个性化分词模型的训练同样可以通过分词训练套件 <code class="file docutils literal notranslate"><span class="pre">otcws</span></code> 来实现。:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ./tools/train/otcws customized-learn
+otcws(customized-learn) in LTP 3.3.2 - (C) 2012-2016 HIT-SCIR
+Customized training suite for Chinese word segmentation
+
+usage: ./otcws learn &lt;options&gt;
+
+options:
+  --baseline-model arg         The baseline model, which should be saved with
+                               --dump-details options.
+  --model arg                  The prefix of the model file, model will be
+                               stored as model.$iter.
+  --reference arg              The path to the reference file.
+  --development arg            The path to the development file.
+  --algorithm arg              The learning algorithm
+                                - ap: averaged perceptron
+                                - pa: passive aggressive [default]
+  --max-iter arg               The number of iteration [default=10].
+  --rare-feature-threshold arg The threshold for rare feature, used in model
+                               truncation. [default=0]
+  -h [ --help ]                Show help information
+</pre></div>
+</div>
+<p>这种情况下，需要指定 <code class="code docutils literal notranslate"><span class="pre">--baseline-model</span></code> 参数为前面获得的基础模型。其余选项与 <code class="code docutils literal notranslate"><span class="pre">./tools/train/otcws</span> <span class="pre">learn</span></code> 一致。</p>
+</div>
+<div class="section" id="id9">
+<h3>个性化测试<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<p>个性化分词模型的训练同样可以通过分词训练套件 <code class="file docutils literal notranslate"><span class="pre">otcws</span></code> 来实现。:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ./tools/train/otcws customized-test
+otcws(customized-test) in LTP 3.3.2 - (C) 2012-2016 HIT-SCIR
+Customized testing suite for Chinese word segmentation
+
+usage: ./otcws test &lt;options&gt;
+
+options:
+  --baseline-model arg  The path to the baseline model.
+  --model arg           The path to the model file.
+  --lexicon arg         The lexicon file, (optional, if configured, constrained
+                        decoding will be performed).
+  --input arg           The path to the reference file.
+  --evaluate arg        if configured, perform evaluation, input words in
+                        sentence should be separated by space.
+  -h [ --help ]         Show help information
+</pre></div>
+</div>
+<p>与customized-learn类似，需指定 <code class="code docutils literal notranslate"><span class="pre">--baseline-model</span></code> 参数为前面获得的基础模型。其余选项与 <code class="code docutils literal notranslate"><span class="pre">./tools/train/otcws</span> <span class="pre">test</span></code> 一致。</p>
+</div>
+</div>
+<div class="section" id="id10">
+<h2>词性标注模块<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<p>与分词模块相同，我们将词性标注任务建模为基于词的序列标注问题。对于输入句子的词序列，模型给句子中的每个词标注一个标识词边界的标记。在LTP中，我们采用的北大标注集。关于北大标注集信息，请参考：</p>
+<p>对于模型参数，我们采用在线机器学习算法框架从标注数据中学习参数。对于词性标注模型，我们使用的模型特征有：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="31%" />
+<col width="69%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">类别</th>
+<th class="head">特征</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>word-unigram</td>
+<td>w[-2], w[-1], w[0], w[1], w[2]</td>
+</tr>
+<tr class="row-odd"><td>word-bigram</td>
+<td>w[-2]w[-1],w[-1]w[0],w[0]w[1],w[1]w[2]</td>
+</tr>
+<tr class="row-even"><td>word-trigram</td>
+<td>w[-1]w[0]w[1]</td>
+</tr>
+<tr class="row-odd"><td>last-first-character</td>
+<td>ch[0,0]ch[0,n],ch[-1,n]ch[0,0],ch[0,-1]ch[1,0]</td>
+</tr>
+<tr class="row-even"><td>length</td>
+<td>length</td>
+</tr>
+<tr class="row-odd"><td>prefix</td>
+<td>ch[0,0],ch[0,0:1],ch[0,0:2]</td>
+</tr>
+<tr class="row-even"><td>suffix</td>
+<td>ch[0,n-2:n],ch[0,n-1:n],ch[0,n]</td>
+</tr>
+</tbody>
+</table>
+<p>基础模型在人民日报数据集上的性能如下：</p>
+<p>语料信息：人民日报1998年2月-6月(后10%数据作为开发集)作为训练数据，1月作为测试数据。</p>
+<ul>
+<li><p class="first">准确率为：</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="44%" />
+<col width="56%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">P</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>开发集</td>
+<td>0.983586</td>
+</tr>
+<tr class="row-odd"><td>测试集</td>
+<td>0.983456</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</li>
+<li><p class="first">测试程序：pos_cmdline</p>
+</li>
+<li><p class="first">运行时内存：415MB</p>
+</li>
+<li><p class="first">速度：45942 tok./sec</p>
+</li>
+</ul>
+</div>
+<div class="section" id="id11">
+<h2>命名实体识别模块<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
+<p>与分词模块相同，我们将命名实体识别建模为基于词的序列标注问题。对于输入句子的词序列，模型给句子中的每个词标注一个标识命名实体边界和实体类别的标记。在LTP中，我们支持人名、地名、机构名三类命名实体的识别。关于LTP使用的标记参考附录。</p>
+<p>对于模型参数，我们采用在线机器学习算法框架从标注数据中学习参数。对于词性标注模型，我们使用的模型特征有：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="29%" />
+<col width="71%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">类别</th>
+<th class="head">特征</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>word-unigram</td>
+<td>w[-2], w[-1], w[0], w[1], w[2]</td>
+</tr>
+<tr class="row-odd"><td>word-bigram</td>
+<td>w[-2]w[-1],w[-1]w[0],w[0]w[1],w[1]w[2]</td>
+</tr>
+<tr class="row-even"><td>postag-unigram</td>
+<td>p[-2],p[-1],p[0],p[1],p[2]</td>
+</tr>
+<tr class="row-odd"><td>postag-bigram</td>
+<td>p[-1]p[0],p[0]p[1]</td>
+</tr>
+</tbody>
+</table>
+<p>基础模型在人民日报数据集上的性能如下：</p>
+<p>语料信息：人民日报1998年1月做训练（后10%数据作为开发集），6月前10000句做测试作为训练数据。</p>
+<ul>
+<li><p class="first">准确率</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="26%" />
+<col width="26%" />
+<col width="26%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">P</th>
+<th class="head">R</th>
+<th class="head">F</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>开发集</td>
+<td>0.924769</td>
+<td>0.908858</td>
+<td>0.916745</td>
+</tr>
+<tr class="row-odd"><td>测试集</td>
+<td>0.942912</td>
+<td>0.940538</td>
+<td>0.941724</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</li>
+<li><p class="first">测试程序：ner_cmdline</p>
+</li>
+<li><p class="first">运行时内存：23MB</p>
+</li>
+<li><p class="first">速度：49000 tok./sec</p>
+</li>
+</ul>
+</div>
+<div class="section" id="id12">
+<h2>依存句法分析模块<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h2>
+<p>依存句法分析模块的主要算法依据神经网络依存句法分析算法，Chen and Manning (2014)。同时加入丰富的全局特征和聚类特征。在模型训练时，我们也参考了Yoav等人关于dynamic oracle的工作。
+在 <a class="reference external" href="https://catalog.ldc.upenn.edu/LDC2012T05">Chinese Dependency Treebank(CDT)</a> 数据集上，其中运行速度和内存开销从CDT测试集上结果中获得。</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="46%" />
+<col width="27%" />
+<col width="27%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">UAS</th>
+<th class="head">LAS</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>开发集</td>
+<td>84.79</td>
+<td>82.28</td>
+</tr>
+<tr class="row-odd"><td>测试集</td>
+<td>84.00</td>
+<td>81.14</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>测试程序：par_cmdline</li>
+<li>运行时内存：366MB</li>
+<li>速度：6487 tok./sec</li>
+</ul>
+</div>
+<div class="section" id="id13">
+<h2>语义角色标注模块<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h2>
+<p>在LTP中，我们将SRL分为两个子任务，其一是谓词的识别（Predicate Identification, PI），其次是论元的识别以及分类（Argument Identification and Classification, AIC）。对于论元的识别及分类，我们将其视作一个联合任务，即将“非论元”也看成是论元分类问题中的一个类别。在SRL系统中，我们在最大熵模型中引入L1正则，使得特征维度降至约为原来的1/40，从而大幅度地减小了模型的内存使用率，并且提升了预测的速度。同时，为了保证标注结果满足一定的约束条件，系统增加了一个后处理过程。</p>
+<p>在CoNLL 2009评测数据集上，利用LTP的自动词性及句法信息，SRL性能如下所示：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="15%" />
+<col width="16%" />
+<col width="25%" />
+<col width="24%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Precision</th>
+<th class="head">Recall</th>
+<th class="head">F-Score</th>
+<th class="head">Speed</th>
+<th class="head">Mem.</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>0.8444</td>
+<td>0.7234</td>
+<td>0.7792</td>
+<td>41.1 sent./s</td>
+<td>94M(PI+AIC)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">实现原理与性能</a><ul>
+<li><a class="reference internal" href="#id2">在线学习算法框架</a></li>
+<li><a class="reference internal" href="#truncate-reference-label">模型裁剪</a></li>
+<li><a class="reference internal" href="#id4">测试设置</a></li>
+<li><a class="reference internal" href="#id5">分词模块</a></li>
+<li><a class="reference internal" href="#customized-cws-reference-label">个性化分词</a><ul>
+<li><a class="reference internal" href="#id7">准备基础模型</a></li>
+<li><a class="reference internal" href="#id8">个性化训练</a></li>
+<li><a class="reference internal" href="#id9">个性化测试</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id10">词性标注模块</a></li>
+<li><a class="reference internal" href="#id11">命名实体识别模块</a></li>
+<li><a class="reference internal" href="#id12">依存句法分析模块</a></li>
+<li><a class="reference internal" href="#id13">语义角色标注模块</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="train.html"
+                        title="previous chapter">使用训练套件</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="faq.html"
+                        title="next chapter">常见问题</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/theory.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="faq.html" title="常见问题"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="train.html" title="使用训练套件"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LTP 3.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015, HIT-SCIR.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>
